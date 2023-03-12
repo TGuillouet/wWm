@@ -7,11 +7,13 @@ use crate::WINDOW_MANAGER;
 #[derive(Debug)]
 pub struct Window {
     pub title: String,
+    pub hwnd: isize,
 }
 impl Window {
-    pub fn new(title: &str) -> Self {
+    pub fn new(title: &str, hwnd: isize) -> Self {
         Self {
             title: title.to_owned(),
+            hwnd,
         }
     }
 }
@@ -44,7 +46,7 @@ impl WindowManager {
         let window_title = String::from_utf16_lossy(&text[..len as usize]);
 
         if !window_title.is_empty() {
-            let window = Window::new(&window_title);
+            let window = Window::new(&window_title, hwnd);
 
             let wm = WINDOW_MANAGER
                 .get_mut()
