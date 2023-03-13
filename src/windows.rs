@@ -1,5 +1,7 @@
 use std::collections::LinkedList;
 
+use windows_sys::Win32::UI::WindowsAndMessaging::SetWindowPos;
+
 #[derive(Debug)]
 pub struct Window {
     pub title: String,
@@ -11,6 +13,10 @@ impl Window {
             title: title.to_owned(),
             hwnd,
         }
+    }
+
+    pub fn set_window_pos(&self, x: i32, y: i32, width: i32, height: i32) -> bool {
+        unsafe { SetWindowPos(self.hwnd, 0, x, y, width, height, 0x0040) == 1 }
     }
 }
 
