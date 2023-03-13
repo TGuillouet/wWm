@@ -20,8 +20,8 @@ impl Window {
     }
 }
 
-#[derive(Default)]
-struct Workspace {
+#[derive(Debug, Default)]
+pub struct Workspace {
     windows: LinkedList<Window>,
 }
 impl Workspace {
