@@ -1,6 +1,8 @@
 use std::collections::HashMap;
 
-use windows_sys::Win32::UI::WindowsAndMessaging::{EnumWindows, GetWindowTextW, IsWindowVisible};
+use windows_sys::Win32::UI::WindowsAndMessaging::{
+    EnumWindows, GetWindowTextW, IsWindowVisible, SetWindowPos,
+};
 
 use crate::windows::Window;
 use crate::WINDOW_MANAGER;
@@ -42,5 +44,13 @@ impl WindowManager {
         }
 
         1
+    }
+
+    pub fn arrange_windows(&self) {
+        for (key, window) in self.opened_windows.iter() {
+            println!("Arranging window {}", window.title);
+            let a = unsafe { SetWindowPos(window.hwnd, 0, 10, 10, 1600, 900, 0x0040) == 1 };
+            println!("Test: {}", a);
+        }
     }
 }

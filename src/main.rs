@@ -18,4 +18,6 @@ fn main() {
     for (_, window) in list {
         println!("Window {:?}", window);
     }
+
+    WindowManager::global().arrange_windows()
 }
