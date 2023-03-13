@@ -1,8 +1,8 @@
 use once_cell::sync::OnceCell;
-
-use crate::windows::WindowManager;
+use wm::WindowManager;
 
 mod windows;
+mod wm;
 
 pub static mut WINDOW_MANAGER: OnceCell<WindowManager> = OnceCell::new();
 
