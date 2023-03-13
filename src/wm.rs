@@ -1,8 +1,7 @@
 use std::collections::HashMap;
 
-use windows_sys::Win32::UI::WindowsAndMessaging::{
-    EnumWindows, GetWindowTextW, IsWindowVisible, SetWindowPos,
-};
+use regex::Regex;
+use windows_sys::Win32::UI::WindowsAndMessaging::{EnumWindows, GetWindowTextW, IsWindowVisible};
 
 use crate::windows::Window;
 use crate::WINDOW_MANAGER;
@@ -47,10 +46,13 @@ impl WindowManager {
     }
 
     pub fn arrange_windows(&self) {
+        let re = Regex::new(r"Obsidian").unwrap();
         for (key, window) in self.opened_windows.iter() {
-            println!("Arranging window {}", window.title);
-            let a = unsafe { SetWindowPos(window.hwnd, 0, 10, 10, 1600, 900, 0x0040) == 1 };
-            println!("Test: {}", a);
+            if re.is_match(&window.title) {
+                println!("Arranging window {}", window.title);
+                let could_arrange_window = window.set_window_pos(10, 10, 1600, 700);
+                println!("Could arrange window: {}", could_arrange_window);
+            }
         }
     }
 }
