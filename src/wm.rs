@@ -1,19 +1,21 @@
-use std::collections::{HashMap, LinkedList};
-
 use regex::Regex;
 use windows_sys::Win32::UI::WindowsAndMessaging::{EnumWindows, GetWindowTextW, IsWindowVisible};
 
+use crate::btree::Node;
 use crate::windows::Window;
 use crate::WINDOW_MANAGER;
 
 #[derive(Debug)]
 pub struct WindowManager {
-    windows: LinkedList<Window>,
+    windows: Node<Window>,
 }
 impl WindowManager {
     pub fn new() -> Self {
         Self {
-            windows: Default::default(),
+            windows: Node::new(Window {
+                title: "()".to_owned(),
+                hwnd: 1,
+            }),
         }
     }
 
@@ -22,6 +24,19 @@ impl WindowManager {
             WINDOW_MANAGER
                 .get()
                 .expect("Could not get the global instance")
+        }
+    }
+    pub fn global_mut() -> &'static mut WindowManager {
+        unsafe {
+            WINDOW_MANAGER
+                .get_mut()
+                .expect("Could not get the global instance")
+        }
+    }
+
+    pub fn fetch_windows(&self) {
+        unsafe {
+            EnumWindows(Some(WindowManager::get_window_def), 0);
         }
     }
 
@@ -40,18 +55,61 @@ impl WindowManager {
             let wm = WINDOW_MANAGER
                 .get_mut()
                 .expect("window manager not initialized");
-            wm.windows.push_back(window);
+            let re = Regex::new(r"Obsidian").unwrap();
+            let re2 = Regex::new(r"Discord").unwrap();
+            let re3 = Regex::new(r"Opera").unwrap();
+            if re.is_match(&window.title)
+                || re2.is_match(&window.title)
+                || re3.is_match(&window.title)
+            {
+                wm.windows.insert(window);
+            }
         }
 
         1
     }
 
-    pub fn arrange_windows(&self) {
-        let re = Regex::new(r"Obsidian").unwrap();
-        for window in self.windows.iter() {
-            if re.is_match(&window.title) {
-                window.set_window_pos(10, 10, 1600, 900);
-            }
+    pub fn arrange_windows(&self, x: i32, y: i32, width: i32, height: i32) {
+        self.arrange_recursive(&self.windows, x, y, width, height);
+    }
+
+    fn arrange_recursive(
+        &self,
+        current_node: &Node<Window>,
+        x: i32,
+        y: i32,
+        width: i32,
+        height: i32,
+    ) {
+        println!("====================");
+        println!("Current: {}", current_node.value.title);
+
+        println!("Window pos set, {}, {}, {}, {}", x, y, width, height);
+        println!("Left {:?}", current_node.left);
+        println!("Right {:?}", current_node.right);
+
+        if current_node.left.is_some() && current_node.right.is_some() {
+            println!("Splitting");
+            let new_width = width / 2;
+            let new_height = height;
+
+            current_node
+                .left
+                .as_ref()
+                .unwrap()
+                .value
+                .set_window_pos(x, y, new_width, new_height);
+
+            self.arrange_recursive(
+                &current_node.right.as_ref().unwrap(),
+                x + new_width,
+                y,
+                new_width,
+                new_height,
+            );
+            return;
         }
+
+        current_node.value.set_window_pos(x, y, width, height);
     }
 }
