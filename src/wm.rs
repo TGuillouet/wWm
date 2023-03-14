@@ -1,7 +1,7 @@
 use regex::Regex;
 use windows_sys::Win32::UI::WindowsAndMessaging::{EnumWindows, GetWindowTextW, IsWindowVisible};
 
-use crate::tree::Node;
+use crate::tree::{Node, TilingDirection};
 use crate::windows::Window;
 use crate::WINDOW_MANAGER;
 
@@ -12,10 +12,13 @@ pub struct WindowManager {
 impl WindowManager {
     pub fn new() -> Self {
         Self {
-            windows: Node::new(Window {
-                title: "()".to_owned(),
-                hwnd: 1,
-            }),
+            windows: Node::new(
+                Window {
+                    title: "()".to_owned(),
+                    hwnd: 1,
+                },
+                TilingDirection::Vertical,
+            ),
         }
     }
 
@@ -62,7 +65,7 @@ impl WindowManager {
                 || re2.is_match(&window.title)
                 || re3.is_match(&window.title)
             {
-                wm.windows.insert(window);
+                wm.windows.insert(window, TilingDirection::Horizontal);
             }
         }
 
@@ -83,14 +86,25 @@ impl WindowManager {
     ) {
         let mut child_x = x;
         let mut child_y = y;
+
+        let width_ratio = width / current_node.childrens.len() as i32;
+        let height_ratio = height / current_node.childrens.len() as i32;
+
         for children in current_node.childrens.iter() {
-            let child_width = width / 2;
-            let child_height = height;
+            let child_width = if children.direction == TilingDirection::Horizontal {
+                width_ratio
+            } else {
+                width
+            };
+            let child_height = if children.direction == TilingDirection::Vertical {
+                height_ratio
+            } else {
+                height
+            };
             if children.is_leaf() {
-                println!("Leaf");
-                let new_width = child_width / 2;
+                let new_width = child_width;
                 let new_height = child_height;
-                let new_x = child_x + 10;
+                let new_x = child_x;
                 let new_y = child_y;
 
                 children
@@ -100,7 +114,10 @@ impl WindowManager {
                 self.arrange_recursive(&children, child_x, child_y, child_width, child_height)
             }
 
-            child_x += child_width / 2;
+            match children.direction {
+                TilingDirection::Vertical => child_y += child_height,
+                TilingDirection::Horizontal => child_x += child_width,
+            }
         }
     }
 }
