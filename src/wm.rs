@@ -1,7 +1,7 @@
 use regex::Regex;
 use windows_sys::Win32::UI::WindowsAndMessaging::{EnumWindows, GetWindowTextW, IsWindowVisible};
 
-use crate::btree::Node;
+use crate::tree::Node;
 use crate::windows::Window;
 use crate::WINDOW_MANAGER;
 
@@ -40,7 +40,7 @@ impl WindowManager {
         }
     }
 
-    unsafe extern "system" fn get_window_def(hwnd: isize, l_param: isize) -> i32 {
+    unsafe extern "system" fn get_window_def(hwnd: isize, _l_param: isize) -> i32 {
         if IsWindowVisible(hwnd) == 0 {
             return 1;
         }
@@ -56,7 +56,7 @@ impl WindowManager {
                 .get_mut()
                 .expect("window manager not initialized");
             let re = Regex::new(r"Obsidian").unwrap();
-            let re2 = Regex::new(r"Discord").unwrap();
+            let re2 = Regex::new(r"Teamcraft").unwrap();
             let re3 = Regex::new(r"Opera").unwrap();
             if re.is_match(&window.title)
                 || re2.is_match(&window.title)
@@ -81,35 +81,26 @@ impl WindowManager {
         width: i32,
         height: i32,
     ) {
-        println!("====================");
-        println!("Current: {}", current_node.value.title);
+        let mut child_x = x;
+        let mut child_y = y;
+        for children in current_node.childrens.iter() {
+            let child_width = width / 2;
+            let child_height = height;
+            if children.is_leaf() {
+                println!("Leaf");
+                let new_width = child_width / 2;
+                let new_height = child_height;
+                let new_x = child_x + 10;
+                let new_y = child_y;
 
-        println!("Window pos set, {}, {}, {}, {}", x, y, width, height);
-        println!("Left {:?}", current_node.left);
-        println!("Right {:?}", current_node.right);
+                children
+                    .value
+                    .set_window_pos(new_x, new_y, new_width, new_height);
+            } else {
+                self.arrange_recursive(&children, child_x, child_y, child_width, child_height)
+            }
 
-        if current_node.left.is_some() && current_node.right.is_some() {
-            println!("Splitting");
-            let new_width = width / 2;
-            let new_height = height;
-
-            current_node
-                .left
-                .as_ref()
-                .unwrap()
-                .value
-                .set_window_pos(x, y, new_width, new_height);
-
-            self.arrange_recursive(
-                &current_node.right.as_ref().unwrap(),
-                x + new_width,
-                y,
-                new_width,
-                new_height,
-            );
-            return;
+            child_x += child_width / 2;
         }
-
-        current_node.value.set_window_pos(x, y, width, height);
     }
 }

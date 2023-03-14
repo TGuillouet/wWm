@@ -1,7 +1,7 @@
 use once_cell::sync::OnceCell;
 use wm::WindowManager;
 
-mod btree;
+mod tree;
 mod windows;
 mod wm;
 
