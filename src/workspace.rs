@@ -16,13 +16,7 @@ impl Workspace {
         Self {
             monitor_handle: hmonitor,
             monitor_resolution: resolution,
-            windows: Node::new(
-                Window {
-                    title: "()".to_owned(),
-                    hwnd: 1,
-                },
-                TilingDirection::Vertical,
-            ),
+            windows: Node::new(Window::new("()", 1), TilingDirection::Vertical),
         }
     }
 

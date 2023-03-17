@@ -1,15 +1,21 @@
 use windows_sys::Win32::UI::WindowsAndMessaging::SetWindowPos;
 
-#[derive(Debug)]
+pub enum TilingMode {
+    Managed,
+    Monocle,
+}
+
 pub struct Window {
     pub title: String,
     pub hwnd: isize,
+    pub mode: TilingMode,
 }
 impl Window {
     pub fn new(title: &str, hwnd: isize) -> Self {
         Self {
             title: title.to_owned(),
             hwnd,
+            mode: TilingMode::Managed,
         }
     }
 
