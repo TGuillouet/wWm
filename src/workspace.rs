@@ -13,7 +13,6 @@ use crate::{
 };
 
 pub struct Workspace {
-    name: String,
     pub monitor_handle: HMONITOR,
     monitor_resolution: MonitorResolution,
     windows: Node<Window>,
@@ -68,10 +67,6 @@ impl Workspace {
         let height_ratio = height / current_node.childrens.len() as i32;
 
         for children in current_node.childrens.iter() {
-            println!(
-                "Monitor {}, placing children {}",
-                self.name, children.value.title
-            );
             let child_width = if children.direction == TilingDirection::Horizontal {
                 width_ratio
             } else {
