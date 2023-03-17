@@ -1,6 +1,7 @@
 use windows_sys::Win32::Foundation::RECT;
 use windows_sys::Win32::Graphics::Gdi::{GetMonitorInfoW, HMONITOR, MONITORINFO};
 
+#[derive(Debug)]
 pub struct MonitorResolution {
     pub width: i32,
     pub height: i32,

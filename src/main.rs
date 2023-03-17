@@ -5,6 +5,7 @@ mod monitor;
 mod tree;
 mod windows;
 mod wm;
+mod workspace;
 
 pub static mut WINDOW_MANAGER: OnceCell<WindowManager> = OnceCell::new();
 
@@ -16,7 +17,7 @@ fn main() {
             .expect("Could not set the wm instance");
     }
 
-    WindowManager::global().fetch_windows();
     WindowManager::global_mut().get_monitors();
-    WindowManager::global_mut().arrange_windows(0, 0, 1920, 1080)
+    WindowManager::global().fetch_windows();
+    WindowManager::global_mut().arrange_workspaces()
 }
