@@ -1,6 +1,10 @@
 use regex::Regex;
+use windows_sys::Win32::Foundation::LPARAM;
+use windows_sys::Win32::Foundation::RECT;
+use windows_sys::Win32::Graphics::Gdi::{EnumDisplayMonitors, HDC, HMONITOR};
 use windows_sys::Win32::UI::WindowsAndMessaging::{EnumWindows, GetWindowTextW, IsWindowVisible};
 
+use crate::monitor::get_monitor_resolution;
 use crate::tree::{Node, TilingDirection};
 use crate::windows::Window;
 use crate::WINDOW_MANAGER;
@@ -37,39 +41,32 @@ impl WindowManager {
         }
     }
 
-    pub fn fetch_windows(&self) {
+    pub fn get_monitors(&self) {
+        let mut monitors: Vec<HMONITOR> = Vec::new();
+
         unsafe {
-            EnumWindows(Some(WindowManager::get_window_def), 0);
+            EnumDisplayMonitors(
+                0,
+                std::ptr::null_mut(),
+                Some(enum_monitors_callback),
+                &mut monitors as *mut Vec<HMONITOR> as LPARAM,
+            );
+        }
+
+        for monitor in monitors {
+            let monitor_resolution = get_monitor_resolution(monitor);
+
+            println!(
+                "{}, {}",
+                monitor_resolution.width, monitor_resolution.height
+            )
         }
     }
 
-    unsafe extern "system" fn get_window_def(hwnd: isize, _l_param: isize) -> i32 {
-        if IsWindowVisible(hwnd) == 0 {
-            return 1;
+    pub fn fetch_windows(&self) {
+        unsafe {
+            EnumWindows(Some(get_window_def), 0);
         }
-
-        let mut text: [u16; 512] = [0; 512];
-        let len = GetWindowTextW(hwnd, text.as_mut_ptr(), text.len() as i32);
-        let window_title = String::from_utf16_lossy(&text[..len as usize]);
-
-        if !window_title.is_empty() {
-            let window = Window::new(&window_title, hwnd);
-
-            let wm = WINDOW_MANAGER
-                .get_mut()
-                .expect("window manager not initialized");
-            let re = Regex::new(r"Obsidian").unwrap();
-            let re2 = Regex::new(r"Teamcraft").unwrap();
-            let re3 = Regex::new(r"Opera").unwrap();
-            if re.is_match(&window.title)
-                || re2.is_match(&window.title)
-                || re3.is_match(&window.title)
-            {
-                wm.windows.insert(window, TilingDirection::Horizontal);
-            }
-        }
-
-        1
     }
 
     pub fn arrange_windows(&self, x: i32, y: i32, width: i32, height: i32) {
@@ -120,4 +117,42 @@ impl WindowManager {
             }
         }
     }
+}
+
+unsafe extern "system" fn get_window_def(hwnd: isize, _l_param: LPARAM) -> i32 {
+    if IsWindowVisible(hwnd) == 0 {
+        return 1;
+    }
+
+    let mut text: [u16; 512] = [0; 512];
+    let len = GetWindowTextW(hwnd, text.as_mut_ptr(), text.len() as i32);
+    let window_title = String::from_utf16_lossy(&text[..len as usize]);
+
+    if !window_title.is_empty() {
+        let window = Window::new(&window_title, hwnd);
+
+        let wm = WINDOW_MANAGER
+            .get_mut()
+            .expect("window manager not initialized");
+        let re = Regex::new(r"Obsidian").unwrap();
+        let re2 = Regex::new(r"Teamcraft").unwrap();
+        let re3 = Regex::new(r"Opera").unwrap();
+        if re.is_match(&window.title) || re2.is_match(&window.title) || re3.is_match(&window.title)
+        {
+            wm.windows.insert(window, TilingDirection::Horizontal);
+        }
+    }
+
+    1
+}
+
+unsafe extern "system" fn enum_monitors_callback(
+    monitor: HMONITOR,
+    _: HDC,
+    _: *mut RECT,
+    data: LPARAM,
+) -> i32 {
+    let monitors = &mut *(data as *mut Vec<HMONITOR>);
+    monitors.push(monitor);
+    1
 }

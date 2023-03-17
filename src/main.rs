@@ -1,6 +1,7 @@
 use once_cell::sync::OnceCell;
 use wm::WindowManager;
 
+mod monitor;
 mod tree;
 mod windows;
 mod wm;
@@ -16,5 +17,6 @@ fn main() {
     }
 
     WindowManager::global().fetch_windows();
+    WindowManager::global_mut().get_monitors();
     WindowManager::global_mut().arrange_windows(0, 0, 1920, 1080)
 }
