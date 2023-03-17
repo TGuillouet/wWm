@@ -3,7 +3,7 @@ use windows_sys::Win32::Graphics::Gdi::HMONITOR;
 use crate::{
     monitor::MonitorResolution,
     tree::{Node, TilingDirection},
-    windows::Window,
+    windows::{TilingMode, Window},
 };
 
 pub struct Workspace {
@@ -55,32 +55,46 @@ impl Workspace {
         let height_ratio = height / current_node.childrens.len() as i32;
 
         for children in current_node.childrens.iter() {
-            let child_width = if children.direction == TilingDirection::Horizontal {
-                width_ratio
-            } else {
-                width
-            };
-            let child_height = if children.direction == TilingDirection::Vertical {
-                height_ratio
-            } else {
-                height
-            };
-            if children.is_leaf() {
-                let new_width = child_width;
-                let new_height = child_height;
-                let new_x = child_x;
-                let new_y = child_y;
+            match children.value.mode {
+                TilingMode::Managed => {
+                    let child_width = if children.direction == TilingDirection::Horizontal {
+                        width_ratio
+                    } else {
+                        width
+                    };
+                    let child_height = if children.direction == TilingDirection::Vertical {
+                        height_ratio
+                    } else {
+                        height
+                    };
+                    if children.is_leaf() {
+                        let new_width = child_width;
+                        let new_height = child_height;
+                        let new_x = child_x;
+                        let new_y = child_y;
 
-                children
-                    .value
-                    .set_window_pos(new_x, new_y, new_width, new_height);
-            } else {
-                self.arrange_recursive(&children, child_x, child_y, child_width, child_height)
-            }
+                        children
+                            .value
+                            .set_window_pos(new_x, new_y, new_width, new_height);
+                    } else {
+                        self.arrange_recursive(
+                            &children,
+                            child_x,
+                            child_y,
+                            child_width,
+                            child_height,
+                        )
+                    }
 
-            match children.direction {
-                TilingDirection::Vertical => child_y += child_height,
-                TilingDirection::Horizontal => child_x += child_width,
+                    match children.direction {
+                        TilingDirection::Vertical => child_y += child_height,
+                        TilingDirection::Horizontal => child_x += child_width,
+                    }
+                }
+                TilingMode::Monocle => {
+                    todo!()
+                    // TODO: Hide all the other windows (since the monocle mode is fullscreen)
+                }
             }
         }
     }
