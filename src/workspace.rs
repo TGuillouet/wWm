@@ -1,10 +1,4 @@
-use windows_sys::Win32::Foundation::{POINT, RECT};
-use windows_sys::Win32::Graphics::Gdi::{
-    ClientToScreen, GetMonitorInfoW, ScreenToClient, HMONITOR, MONITORINFO,
-};
-use windows_sys::Win32::UI::WindowsAndMessaging::{
-    GetSystemMetrics, GetWindowRect, SM_CXSCREEN, SM_CXVIRTUALSCREEN,
-};
+use windows_sys::Win32::Graphics::Gdi::HMONITOR;
 
 use crate::{
     monitor::MonitorResolution,
