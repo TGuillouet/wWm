@@ -11,13 +11,14 @@ pub static mut WINDOW_MANAGER: OnceCell<WindowManager> = OnceCell::new();
 
 fn main() {
     let window_manager = WindowManager::new();
-    unsafe {
-        WINDOW_MANAGER
-            .set(window_manager)
-            .expect("Could not set the wm instance");
-    }
+    let wm_result = unsafe { WINDOW_MANAGER.set(window_manager) };
 
-    WindowManager::global_mut().get_monitors();
-    WindowManager::global().fetch_windows();
-    WindowManager::global_mut().arrange_workspaces()
+    match wm_result {
+        Ok(_) => {
+            WindowManager::global_mut().get_monitors();
+            WindowManager::global().fetch_windows();
+            WindowManager::global_mut().arrange_workspaces()
+        }
+        Err(_) => panic!("An error occured while putting the window manager in the once_cell"),
+    }
 }

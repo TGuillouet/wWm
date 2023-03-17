@@ -11,7 +11,6 @@ use crate::windows::Window;
 use crate::workspace::Workspace;
 use crate::WINDOW_MANAGER;
 
-#[derive(Debug)]
 pub struct WindowManager {
     workspaces: Vec<Workspace>,
 }

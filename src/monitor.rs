@@ -1,8 +1,8 @@
 use windows_sys::Win32::Foundation::RECT;
 use windows_sys::Win32::Graphics::Gdi::{GetMonitorInfoW, HMONITOR, MONITORINFO};
 
-#[derive(Debug)]
 pub struct MonitorResolution {
+    pub rect: RECT,
     pub width: i32,
     pub height: i32,
 }
@@ -33,6 +33,7 @@ pub fn get_monitor_resolution(monitor: HMONITOR) -> MonitorResolution {
     let screen_height = monitor_info.rcMonitor.bottom - monitor_info.rcMonitor.top;
 
     return MonitorResolution {
+        rect: monitor_info.rcMonitor,
         width: screen_width,
         height: screen_height,
     };

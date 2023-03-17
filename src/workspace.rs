@@ -1,4 +1,10 @@
-use windows_sys::Win32::Graphics::Gdi::HMONITOR;
+use windows_sys::Win32::Foundation::{POINT, RECT};
+use windows_sys::Win32::Graphics::Gdi::{
+    ClientToScreen, GetMonitorInfoW, ScreenToClient, HMONITOR, MONITORINFO,
+};
+use windows_sys::Win32::UI::WindowsAndMessaging::{
+    GetSystemMetrics, GetWindowRect, SM_CXSCREEN, SM_CXVIRTUALSCREEN,
+};
 
 use crate::{
     monitor::MonitorResolution,
@@ -6,8 +12,8 @@ use crate::{
     windows::Window,
 };
 
-#[derive(Debug)]
 pub struct Workspace {
+    name: String,
     pub monitor_handle: HMONITOR,
     monitor_resolution: MonitorResolution,
     windows: Node<Window>,
@@ -28,10 +34,6 @@ impl Workspace {
     }
 
     pub fn add_window(&mut self, window: Window) {
-        println!(
-            "Added window {} to monitor {}",
-            &window.title, self.monitor_handle,
-        );
         self.windows
             .childrens
             .push(Box::new(Node::new(window, TilingDirection::Horizontal)));
@@ -40,8 +42,8 @@ impl Workspace {
     pub fn arrange_windows(&self) {
         self.arrange_recursive(
             &self.windows,
-            0,
-            0,
+            self.monitor_resolution.rect.left,
+            self.monitor_resolution.rect.top,
             self.monitor_resolution.width,
             self.monitor_resolution.height,
         )
@@ -55,6 +57,10 @@ impl Workspace {
         width: i32,
         height: i32,
     ) {
+        if current_node.is_leaf() {
+            return;
+        }
+
         let mut child_x = x;
         let mut child_y = y;
 
@@ -62,6 +68,10 @@ impl Workspace {
         let height_ratio = height / current_node.childrens.len() as i32;
 
         for children in current_node.childrens.iter() {
+            println!(
+                "Monitor {}, placing children {}",
+                self.name, children.value.title
+            );
             let child_width = if children.direction == TilingDirection::Horizontal {
                 width_ratio
             } else {
