@@ -8,7 +8,6 @@ use crate::monitor::get_monitor_from_window;
 use crate::monitor::get_monitor_resolution;
 use crate::windows::Window;
 use crate::workspace::Workspace;
-use crate::WINDOW_MANAGER;
 
 pub struct WindowManager {
     workspaces: Vec<Workspace>,
@@ -17,21 +16,6 @@ impl WindowManager {
     pub fn new() -> Self {
         Self {
             workspaces: Vec::new(),
-        }
-    }
-
-    pub fn global() -> &'static WindowManager {
-        unsafe {
-            WINDOW_MANAGER
-                .get()
-                .expect("Could not get the global instance")
-        }
-    }
-    pub fn global_mut() -> &'static mut WindowManager {
-        unsafe {
-            WINDOW_MANAGER
-                .get_mut()
-                .expect("Could not get the global instance")
         }
     }
 
