@@ -16,7 +16,7 @@ fn main() {
     match wm_result {
         Ok(_) => {
             WindowManager::global_mut().get_monitors();
-            WindowManager::global().fetch_windows();
+            WindowManager::global_mut().fetch_windows();
             WindowManager::global_mut().arrange_workspaces()
         }
         Err(_) => panic!("An error occured while putting the window manager in the once_cell"),

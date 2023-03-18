@@ -1,5 +1,7 @@
 use windows_sys::Win32::Foundation::RECT;
-use windows_sys::Win32::Graphics::Gdi::{GetMonitorInfoW, HMONITOR, MONITORINFO};
+use windows_sys::Win32::Graphics::Gdi::{
+    GetMonitorInfoW, MonitorFromWindow, HMONITOR, MONITORINFO, MONITOR_DEFAULTTONEAREST,
+};
 
 pub struct MonitorResolution {
     pub rect: RECT,
@@ -37,4 +39,8 @@ pub fn get_monitor_resolution(monitor: HMONITOR) -> MonitorResolution {
         width: screen_width,
         height: screen_height,
     };
+}
+
+pub fn get_monitor_from_window(window_hwnd: isize) -> HMONITOR {
+    unsafe { MonitorFromWindow(window_hwnd, MONITOR_DEFAULTTONEAREST) }
 }

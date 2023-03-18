@@ -1,11 +1,10 @@
 use regex::Regex;
 use windows_sys::Win32::Foundation::LPARAM;
 use windows_sys::Win32::Foundation::RECT;
-use windows_sys::Win32::Graphics::Gdi::MonitorFromWindow;
-use windows_sys::Win32::Graphics::Gdi::MONITOR_DEFAULTTONEAREST;
 use windows_sys::Win32::Graphics::Gdi::{EnumDisplayMonitors, HDC, HMONITOR};
-use windows_sys::Win32::UI::WindowsAndMessaging::{EnumWindows, GetWindowTextW, IsWindowVisible};
+use windows_sys::Win32::UI::WindowsAndMessaging::{EnumWindows, IsWindowVisible};
 
+use crate::monitor::get_monitor_from_window;
 use crate::monitor::get_monitor_resolution;
 use crate::windows::Window;
 use crate::workspace::Workspace;
@@ -56,9 +55,33 @@ impl WindowManager {
         }
     }
 
-    pub fn fetch_windows(&self) {
+    pub fn fetch_windows(&mut self) {
+        let mut windows: Vec<isize> = Vec::new();
+
         unsafe {
-            EnumWindows(Some(get_window_def), 0);
+            EnumWindows(Some(get_window_def), &mut windows as *mut _ as LPARAM);
+        }
+
+        for window_hwnd in windows {
+            let title = Window::get_window_title(window_hwnd);
+
+            if title.is_empty() {
+                continue;
+            }
+
+            let re = Regex::new(r"Obsidian").unwrap();
+            let re2 = Regex::new(r"Teamcraft").unwrap();
+            let re3 = Regex::new(r"Opera").unwrap();
+
+            if re.is_match(&title) || re2.is_match(&title) || re3.is_match(&title) {
+                let monitor: HMONITOR = get_monitor_from_window(window_hwnd);
+
+                for workspace in self.workspaces.iter_mut() {
+                    if workspace.monitor_handle == monitor {
+                        workspace.add_window(Window::new(&title, window_hwnd));
+                    }
+                }
+            }
         }
     }
 
@@ -69,34 +92,13 @@ impl WindowManager {
     }
 }
 
-unsafe extern "system" fn get_window_def(hwnd: isize, _l_param: LPARAM) -> i32 {
+unsafe extern "system" fn get_window_def(hwnd: isize, data: LPARAM) -> i32 {
     if IsWindowVisible(hwnd) == 0 {
         return 1;
     }
 
-    let mut text: [u16; 512] = [0; 512];
-    let len = GetWindowTextW(hwnd, text.as_mut_ptr(), text.len() as i32);
-    let window_title = String::from_utf16_lossy(&text[..len as usize]);
-
-    if !window_title.is_empty() {
-        let wm = WINDOW_MANAGER
-            .get_mut()
-            .expect("window manager not initialized");
-        let re = Regex::new(r"Obsidian").unwrap();
-        let re2 = Regex::new(r"Teamcraft").unwrap();
-        let re3 = Regex::new(r"Opera").unwrap();
-        if re.is_match(&window_title) || re2.is_match(&window_title) || re3.is_match(&window_title)
-        {
-            let monitor = unsafe { MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST) };
-
-            for workspace in wm.workspaces.iter_mut() {
-                if workspace.monitor_handle == monitor {
-                    workspace.add_window(Window::new(&window_title, hwnd));
-                }
-            }
-        }
-    }
-
+    let windows = &mut *(data as *mut Vec<isize>);
+    windows.push(hwnd);
     1
 }
 

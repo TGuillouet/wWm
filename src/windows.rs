@@ -1,4 +1,4 @@
-use windows_sys::Win32::UI::WindowsAndMessaging::SetWindowPos;
+use windows_sys::Win32::UI::WindowsAndMessaging::{GetWindowTextW, SetWindowPos};
 
 pub enum TilingMode {
     Managed,
@@ -21,5 +21,14 @@ impl Window {
 
     pub fn set_window_pos(&self, x: i32, y: i32, width: i32, height: i32) -> bool {
         unsafe { SetWindowPos(self.hwnd, 0, x, y, width, height, 0x0040) == 1 }
+    }
+}
+
+impl Window {
+    pub fn get_window_title(hwnd: isize) -> String {
+        let mut text: [u16; 512] = [0; 512];
+        let len = unsafe { GetWindowTextW(hwnd, text.as_mut_ptr(), text.len() as i32) };
+
+        String::from_utf16_lossy(&text[..len as usize])
     }
 }
