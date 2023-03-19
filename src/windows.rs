@@ -1,5 +1,6 @@
-use windows_sys::Win32::UI::WindowsAndMessaging::{GetWindowTextW, SetWindowPos};
+use windows_sys::Win32::UI::WindowsAndMessaging::{BringWindowToTop, GetWindowTextW, SetWindowPos};
 
+#[derive(PartialEq, Eq)]
 pub enum TilingMode {
     Managed,
     Monocle,
@@ -19,8 +20,17 @@ impl Window {
         }
     }
 
+    pub fn with_mode(mut self, mode: TilingMode) -> Self {
+        self.mode = mode;
+        self
+    }
+
     pub fn set_window_pos(&self, x: i32, y: i32, width: i32, height: i32) -> bool {
         unsafe { SetWindowPos(self.hwnd, 0, x, y, width, height, 0x0040) == 1 }
+    }
+
+    pub fn put_on_top(&self) {
+        unsafe { BringWindowToTop(self.hwnd) };
     }
 }
 

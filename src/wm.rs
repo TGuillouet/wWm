@@ -6,6 +6,7 @@ use windows_sys::Win32::UI::WindowsAndMessaging::{EnumWindows, IsWindowVisible};
 
 use crate::monitor::get_monitor_from_window;
 use crate::monitor::get_monitor_resolution;
+use crate::windows::TilingMode;
 use crate::windows::Window;
 use crate::workspace::Workspace;
 
@@ -62,7 +63,12 @@ impl WindowManager {
 
                 for workspace in self.workspaces.iter_mut() {
                     if workspace.monitor_handle == monitor {
-                        workspace.add_window(Window::new(&title, window_hwnd));
+                        let mode = if re3.is_match(&title) {
+                            TilingMode::Monocle
+                        } else {
+                            TilingMode::Managed
+                        };
+                        workspace.add_window(Window::new(&title, window_hwnd).with_mode(mode));
                     }
                 }
             }

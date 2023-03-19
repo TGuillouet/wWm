@@ -51,8 +51,13 @@ impl Workspace {
         let mut child_x = x;
         let mut child_y = y;
 
-        let width_ratio = width / current_node.childrens.len() as i32;
-        let height_ratio = height / current_node.childrens.len() as i32;
+        let managed_childrens: Vec<&Box<Node<Window>>> = current_node
+            .childrens
+            .iter()
+            .filter(|item| item.value.mode == TilingMode::Managed)
+            .collect();
+        let width_ratio = width / managed_childrens.len() as i32;
+        let height_ratio = height / managed_childrens.len() as i32;
 
         for children in current_node.childrens.iter() {
             match children.value.mode {
@@ -92,8 +97,33 @@ impl Workspace {
                     }
                 }
                 TilingMode::Monocle => {
-                    todo!()
-                    // TODO: Hide all the other windows (since the monocle mode is fullscreen)
+                    if children.is_leaf() {
+                        children.value.set_window_pos(
+                            self.monitor_resolution.rect.left,
+                            self.monitor_resolution.rect.top,
+                            self.monitor_resolution.width,
+                            self.monitor_resolution.height,
+                        );
+                        children.value.put_on_top();
+                    } else {
+                        let child_width = if children.direction == TilingDirection::Horizontal {
+                            width_ratio
+                        } else {
+                            width
+                        };
+                        let child_height = if children.direction == TilingDirection::Vertical {
+                            height_ratio
+                        } else {
+                            height
+                        };
+                        self.arrange_recursive(
+                            &children,
+                            child_x,
+                            child_y,
+                            child_width,
+                            child_height,
+                        )
+                    }
                 }
             }
         }
