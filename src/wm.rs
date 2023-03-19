@@ -4,6 +4,7 @@ use windows_sys::Win32::Foundation::RECT;
 use windows_sys::Win32::Graphics::Gdi::{EnumDisplayMonitors, HDC, HMONITOR};
 use windows_sys::Win32::UI::WindowsAndMessaging::{EnumWindows, IsWindowVisible};
 
+use crate::config::Config;
 use crate::monitor::get_monitor_from_window;
 use crate::monitor::get_monitor_resolution;
 use crate::windows::TilingMode;
@@ -11,11 +12,13 @@ use crate::windows::Window;
 use crate::workspace::Workspace;
 
 pub struct WindowManager {
+    config: Config,
     workspaces: Vec<Workspace>,
 }
 impl WindowManager {
-    pub fn new() -> Self {
+    pub fn new(config: Config) -> Self {
         Self {
+            config,
             workspaces: Vec::new(),
         }
     }
@@ -54,21 +57,12 @@ impl WindowManager {
                 continue;
             }
 
-            let re = Regex::new(r"Obsidian").unwrap();
-            let re2 = Regex::new(r"Teamcraft").unwrap();
-            let re3 = Regex::new(r"Opera").unwrap();
-
-            if re.is_match(&title) || re2.is_match(&title) || re3.is_match(&title) {
+            if self.config.is_managed(&title) {
                 let monitor: HMONITOR = get_monitor_from_window(window_hwnd);
 
                 for workspace in self.workspaces.iter_mut() {
                     if workspace.monitor_handle == monitor {
-                        let mode = if re3.is_match(&title) {
-                            TilingMode::Monocle
-                        } else {
-                            TilingMode::Managed
-                        };
-                        workspace.add_window(Window::new(&title, window_hwnd).with_mode(mode));
+                        workspace.add_window(Window::new(&title, window_hwnd));
                     }
                 }
             }
