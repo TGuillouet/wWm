@@ -16,6 +16,8 @@ fn main() {
 
     window_manager.list_managable_windows();
 
-    window_manager.fetch_windows();
-    window_manager.arrange_workspaces();
+    loop {
+        window_manager.fetch_windows();
+        window_manager.arrange_workspaces();
+    }
 }

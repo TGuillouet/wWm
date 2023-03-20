@@ -9,7 +9,7 @@ use crate::{
 pub struct Workspace {
     pub monitor_handle: HMONITOR,
     monitor_resolution: MonitorResolution,
-    windows: Node<Window>,
+    pub windows: Node<Window>,
 }
 impl Workspace {
     pub fn new(hmonitor: HMONITOR, resolution: MonitorResolution) -> Self {
@@ -24,6 +24,26 @@ impl Workspace {
         self.windows
             .childrens
             .push(Box::new(Node::new(window, TilingDirection::Horizontal)));
+    }
+
+    pub fn remove_window_recursive(window: &mut Node<Window>, window_handle: isize) {
+        // Find the window to remove
+        let has_window_to_remove = window
+            .childrens
+            .iter()
+            .any(|child| child.value.hwnd == window_handle);
+
+        if !has_window_to_remove {
+            for children in window.childrens.iter_mut() {
+                Workspace::remove_window_recursive(children, window_handle);
+            }
+            return;
+        }
+
+        // Get the parent and retain only the windows that do not have the handle passed in parameter
+        window
+            .childrens
+            .retain(|child| child.value.hwnd != window_handle);
     }
 
     pub fn arrange_windows(&self) {
