@@ -1,5 +1,3 @@
-use std::thread::JoinHandle;
-
 use windows_sys::Win32::Foundation::LPARAM;
 use windows_sys::Win32::Foundation::RECT;
 use windows_sys::Win32::Graphics::Gdi::{EnumDisplayMonitors, HDC, HMONITOR};
