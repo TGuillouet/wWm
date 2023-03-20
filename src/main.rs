@@ -13,6 +13,9 @@ fn main() {
 
     let mut window_manager = WindowManager::new(config);
     window_manager.get_monitors();
+
+    window_manager.list_managable_windows();
+
     window_manager.fetch_windows();
-    window_manager.arrange_workspaces()
+    window_manager.arrange_workspaces();
 }

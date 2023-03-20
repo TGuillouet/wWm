@@ -1,4 +1,5 @@
-use regex::Regex;
+use std::thread::JoinHandle;
+
 use windows_sys::Win32::Foundation::LPARAM;
 use windows_sys::Win32::Foundation::RECT;
 use windows_sys::Win32::Graphics::Gdi::{EnumDisplayMonitors, HDC, HMONITOR};
@@ -7,7 +8,6 @@ use windows_sys::Win32::UI::WindowsAndMessaging::{EnumWindows, IsWindowVisible};
 use crate::config::Config;
 use crate::monitor::get_monitor_from_window;
 use crate::monitor::get_monitor_resolution;
-use crate::windows::TilingMode;
 use crate::windows::Window;
 use crate::workspace::Workspace;
 
@@ -66,6 +66,24 @@ impl WindowManager {
                     }
                 }
             }
+        }
+    }
+
+    pub fn list_managable_windows(&self) {
+        let mut windows: Vec<isize> = Vec::new();
+
+        unsafe {
+            EnumWindows(Some(get_window_def), &mut windows as *mut _ as LPARAM);
+        }
+
+        for window_hwnd in windows {
+            let title = Window::get_window_title(window_hwnd);
+
+            if title.is_empty() || self.config.is_excluded(&title) {
+                continue;
+            }
+
+            println!("{}", &title);
         }
     }
 
