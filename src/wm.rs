@@ -3,6 +3,7 @@ use windows_sys::Win32::Foundation::RECT;
 use windows_sys::Win32::Graphics::Gdi::{EnumDisplayMonitors, HDC, HMONITOR};
 use windows_sys::Win32::UI::WindowsAndMessaging::{EnumWindows, IsWindowVisible};
 
+use crate::actions::WmAction;
 use crate::config::Config;
 use crate::monitor::get_monitor_from_window;
 use crate::monitor::get_monitor_resolution;
@@ -121,6 +122,15 @@ impl WindowManager {
     pub fn arrange_workspaces(&self) {
         for workspace in self.workspaces.iter() {
             workspace.arrange_windows()
+        }
+    }
+
+    pub fn handle_action(&self, action: WmAction) {
+        match action {
+            WmAction::Ping => {
+                println!("Pong !");
+            }
+            WmAction::Close { hwnd } => {}
         }
     }
 }
