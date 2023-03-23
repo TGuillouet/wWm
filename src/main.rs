@@ -1,14 +1,14 @@
 use dotenv::dotenv;
-use std::{ffi::CString, mem::zeroed};
+use input::{create_inputs_window, unregister_hotkeys};
+use std::mem::zeroed;
 
 use config::ConfigBuilder;
-use windows_sys::Win32::{
-    System::LibraryLoader::GetModuleHandleW,
-    UI::WindowsAndMessaging::{CreateWindowExW, DispatchMessageW, GetMessageW, TranslateMessage},
+use windows_sys::Win32::UI::WindowsAndMessaging::{
+    DispatchMessageW, GetMessageA, TranslateMessage,
 };
 use wm::WindowManager;
 
-use crate::input::{register_hotkeys, unregister_hotkeys};
+use crate::input::register_hotkeys;
 
 mod config;
 mod input;
@@ -31,39 +31,23 @@ fn main() {
 
     let config = ConfigBuilder::new(config_file_str).build();
 
-    let hwnd = unsafe {
-        let h_instance = GetModuleHandleW(std::ptr::null());
-
-        CreateWindowExW(
-            0,
-            CString::new("wWm").unwrap().as_bytes().as_ptr() as *const u16,
-            CString::new("wWm").unwrap().as_bytes().as_ptr() as *const u16,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            h_instance,
-            std::ptr::null(),
-        )
-    };
-
-    println!("{}", hwnd);
+    let global_hwnd = create_inputs_window();
 
     let mut window_manager = WindowManager::new(config);
     window_manager.get_monitors();
 
     window_manager.list_managable_windows();
+    window_manager.fetch_windows();
+    window_manager.arrange_workspaces();
 
-    loop {
-        // let mut msg = unsafe { zeroed() };
-        // unsafe { GetMessageW(&mut msg, hwnd, 0, 0) };
-        // unsafe { TranslateMessage(&msg) };
-        // unsafe { DispatchMessageW(&msg) };
+    register_hotkeys(global_hwnd);
+    let mut msg = unsafe { zeroed() };
+    while unsafe { GetMessageA(&mut msg, global_hwnd, 0, 0) > 0 } {
+        unsafe { TranslateMessage(&msg) };
+        unsafe { DispatchMessageW(&msg) };
 
         window_manager.fetch_windows();
         window_manager.arrange_workspaces();
     }
+    unregister_hotkeys(global_hwnd);
 }
