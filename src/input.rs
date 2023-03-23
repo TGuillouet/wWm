@@ -1,7 +1,7 @@
 use std::{ffi::CString, mem::zeroed};
 
 use windows_sys::Win32::{
-    Foundation::{GetLastError, LPARAM, LRESULT, WPARAM},
+    Foundation::{LPARAM, LRESULT, WPARAM},
     System::LibraryLoader::GetModuleHandleW,
     UI::{
         Input::KeyboardAndMouse::{RegisterHotKey, UnregisterHotKey, MOD_CONTROL},

@@ -130,7 +130,7 @@ impl WindowManager {
             WmAction::Ping => {
                 println!("Pong !");
             }
-            WmAction::Close { hwnd } => {}
+            WmAction::Close { hwnd: _ } => {}
         }
     }
 }

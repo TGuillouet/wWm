@@ -1,6 +1,6 @@
 use actions::WmAction;
 use dotenv::dotenv;
-use input::{create_inputs_window, unregister_hotkeys};
+use input::{create_inputs_window};
 use std::{mem::zeroed, sync::mpsc::Sender, thread::JoinHandle};
 
 use config::{Config, ConfigBuilder};
