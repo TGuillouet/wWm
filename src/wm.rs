@@ -44,13 +44,17 @@ impl WindowManager {
         }
     }
 
-    pub fn fetch_windows(&mut self) {
+    fn get_windows(&self) -> Vec<isize> {
         let mut windows: Vec<isize> = Vec::new();
 
         unsafe {
             EnumWindows(Some(get_window_def), &mut windows as *mut _ as LPARAM);
         }
 
+        windows
+    }
+
+    fn get_managed_windows(&self, windows: &Vec<isize>) -> Vec<isize> {
         let mut managed_windows = Vec::new();
         for window_hwnd in windows.clone() {
             let title = Window::get_window_title(window_hwnd);
@@ -63,6 +67,14 @@ impl WindowManager {
                 managed_windows.push(window_hwnd);
             }
         }
+
+        managed_windows
+    }
+
+    pub fn fetch_windows(&mut self) {
+        let windows = self.get_windows();
+
+        let managed_windows = self.get_managed_windows(&windows);
 
         // Check if a window has been closed
         if managed_windows.len() < self.windows.len() {
@@ -102,18 +114,11 @@ impl WindowManager {
     }
 
     pub fn list_managable_windows(&self) {
-        let mut windows: Vec<isize> = Vec::new();
-
-        unsafe {
-            EnumWindows(Some(get_window_def), &mut windows as *mut _ as LPARAM);
-        }
+        let windows = self.get_windows();
+        let windows = self.get_managed_windows(&windows);
 
         for window_hwnd in windows {
             let title = Window::get_window_title(window_hwnd);
-
-            if title.is_empty() || self.config.is_excluded(&title) {
-                continue;
-            }
 
             println!("{}", &title);
         }
@@ -133,6 +138,12 @@ impl WindowManager {
             WmAction::Close { hwnd: _ } => {}
         }
     }
+
+    fn change_current_window(&self, hwnd: isize) {}
+
+    fn toggle_monocle_on_current(&self) {}
+
+    fn reset_windows_modes(&self) {}
 }
 
 unsafe extern "system" fn get_window_def(hwnd: isize, data: LPARAM) -> i32 {
