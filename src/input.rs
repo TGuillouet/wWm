@@ -79,10 +79,16 @@ fn handle_hotkey(hwnd: isize, key: usize) {
         1 => window_data
             .sender
             .send(crate::WmAction::Workspace(
+                crate::actions::WorkspaceAction::PreviousAsCurrent,
+            ))
+            .unwrap(),
+        2 => window_data
+            .sender
+            .send(crate::WmAction::Workspace(
                 crate::actions::WorkspaceAction::NextAsCurrent,
             ))
             .unwrap(),
-        2 => {
+        3 => {
             window_data
                 .sender
                 .send(crate::actions::WmAction::Close { hwnd })
@@ -99,12 +105,16 @@ pub fn register_hotkeys(hwnd: isize) {
 
     let registered = unsafe { RegisterHotKey(hwnd, 2, modifier, 50) }; // VK_2
     println!("Hotkey 2 registered: {}", registered);
+
+    let registered = unsafe { RegisterHotKey(hwnd, 3, modifier, 51) }; // VK_3
+    println!("Hotkey 2 registered: {}", registered);
 }
 
 pub fn unregister_hotkeys(hwnd: isize) {
     println!("Unregistering the hotkeys");
     unsafe { UnregisterHotKey(hwnd, 1) };
     unsafe { UnregisterHotKey(hwnd, 2) };
+    unsafe { UnregisterHotKey(hwnd, 3) };
 }
 
 pub fn close_inputs_window(hwnd: isize) {

@@ -133,11 +133,16 @@ impl WindowManager {
     pub fn handle_action(&mut self, action: WorkspaceAction) {
         match action {
             WorkspaceAction::NextAsCurrent => {
-                println!("Next as current");
-                self.workspaces[0].set_current_next()
+                // TODO: Make the change only on the workspace where the mouse is on
+                for workspace in self.workspaces.iter_mut() {
+                    workspace.set_current_next();
+                }
             }
             WorkspaceAction::PreviousAsCurrent => {
-                println!("Previous as current")
+                // TODO: Make the change only on the workspace where the mouse is on
+                for workspace in self.workspaces.iter_mut() {
+                    workspace.set_current_previous();
+                }
             }
         }
     }
