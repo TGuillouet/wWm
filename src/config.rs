@@ -6,12 +6,12 @@ use std::{
 use regex::Regex;
 
 pub struct Config {
-    excluded_windows: Vec<Regex>,
+    _excluded_windows: Vec<Regex>,
     managed_windows: Vec<Regex>,
 }
 impl Config {
-    pub fn is_excluded(&self, window_title: &str) -> bool {
-        for regex in self.excluded_windows.iter() {
+    pub fn _is_excluded(&self, window_title: &str) -> bool {
+        for regex in self._excluded_windows.iter() {
             if regex.is_match(&window_title) {
                 return true;
             }
@@ -101,7 +101,7 @@ impl ConfigBuilder {
         }
 
         Config {
-            excluded_windows: unmanaged_rule_regexes,
+            _excluded_windows: unmanaged_rule_regexes,
             managed_windows: managed_rule_regexes,
         }
     }
