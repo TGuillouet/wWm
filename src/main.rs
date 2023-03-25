@@ -53,6 +53,7 @@ fn main() {
 
         window_manager.fetch_windows();
         window_manager.arrange_workspaces();
+        std::thread::sleep(std::time::Duration::from_millis(500));
     }
     inputs_thread_handle
         .join()
