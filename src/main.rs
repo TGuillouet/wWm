@@ -1,6 +1,6 @@
 use actions::WmAction;
 use dotenv::dotenv;
-use input::{create_inputs_window};
+use input::create_inputs_window;
 use std::{mem::zeroed, sync::mpsc::Sender, thread::JoinHandle};
 
 use config::{Config, ConfigBuilder};
@@ -42,7 +42,7 @@ fn main() {
     loop {
         match hotkeys_receiver.try_recv() {
             Ok(action) => match action {
-                WmAction::Ping => window_manager.handle_action(action),
+                WmAction::Workspace(action) => window_manager.handle_action(action),
                 WmAction::Close { hwnd } => {
                     close_inputs_window(hwnd);
                     break;

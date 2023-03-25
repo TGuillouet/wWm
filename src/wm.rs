@@ -3,7 +3,7 @@ use windows_sys::Win32::Foundation::RECT;
 use windows_sys::Win32::Graphics::Gdi::{EnumDisplayMonitors, HDC, HMONITOR};
 use windows_sys::Win32::UI::WindowsAndMessaging::{EnumWindows, IsWindowVisible};
 
-use crate::actions::WmAction;
+use crate::actions::WorkspaceAction;
 use crate::config::Config;
 use crate::monitor::get_monitor_from_window;
 use crate::monitor::get_monitor_resolution;
@@ -86,7 +86,7 @@ impl WindowManager {
 
             for window_to_delete in windows_to_delete {
                 for workspace in self.workspaces.iter_mut() {
-                    Workspace::remove_window_recursive(&mut workspace.windows, *window_to_delete);
+                    Workspace::remove_window(&mut workspace.windows, *window_to_delete);
                 }
             }
             self.windows = managed_windows;
@@ -130,20 +130,17 @@ impl WindowManager {
         }
     }
 
-    pub fn handle_action(&self, action: WmAction) {
+    pub fn handle_action(&mut self, action: WorkspaceAction) {
         match action {
-            WmAction::Ping => {
-                println!("Pong !");
+            WorkspaceAction::NextAsCurrent => {
+                println!("Next as current");
+                self.workspaces[0].set_current_next()
             }
-            WmAction::Close { hwnd: _ } => {}
+            WorkspaceAction::PreviousAsCurrent => {
+                println!("Previous as current")
+            }
         }
     }
-
-    fn change_current_window(&self, hwnd: isize) {}
-
-    fn toggle_monocle_on_current(&self) {}
-
-    fn reset_windows_modes(&self) {}
 }
 
 unsafe extern "system" fn get_window_def(hwnd: isize, data: LPARAM) -> i32 {

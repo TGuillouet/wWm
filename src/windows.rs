@@ -1,11 +1,12 @@
 use windows_sys::Win32::UI::WindowsAndMessaging::{BringWindowToTop, GetWindowTextW, SetWindowPos};
 
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Clone)]
 pub enum TilingMode {
     Managed,
     Monocle,
 }
 
+#[derive(Clone)]
 pub struct Window {
     pub title: String,
     pub hwnd: isize,

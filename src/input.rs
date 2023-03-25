@@ -76,7 +76,12 @@ fn handle_hotkey(hwnd: isize, key: usize) {
         unsafe { GetWindowLongPtrW(hwnd, GWLP_USERDATA) as *mut GlobalWindowData };
     let window_data = unsafe { &*window_data_ptr };
     match key {
-        1 => window_data.sender.send(crate::WmAction::Ping).unwrap(),
+        1 => window_data
+            .sender
+            .send(crate::WmAction::Workspace(
+                crate::actions::WorkspaceAction::NextAsCurrent,
+            ))
+            .unwrap(),
         2 => {
             window_data
                 .sender

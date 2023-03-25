@@ -1,5 +1,12 @@
 #[derive(Debug)]
 pub enum WmAction {
-    Ping,
+    Workspace(WorkspaceAction),
     Close { hwnd: isize },
+}
+
+#[derive(Debug)]
+pub enum WorkspaceAction {
+    NextAsCurrent,
+    PreviousAsCurrent,
+    // SetCurrentWindow { hwnd: isize },
 }
