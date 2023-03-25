@@ -1,4 +1,4 @@
-use std::cell::RefCell;
+use std::{cell::RefCell, fmt::Debug};
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum TilingDirection {
@@ -22,8 +22,13 @@ impl<T> Node<T> {
     }
 
     pub fn insert(&mut self, new_val: T, direction: TilingDirection) {
+        // if self.childrens.len() > 1 {
+        //     self.childrens[1].borrow_mut().insert(new_val, direction);
+        //     return;
+        // }
+
         self.childrens
-            .push(RefCell::new(Box::new(Node::new(new_val, direction))))
+            .push(RefCell::new(Box::new(Node::new(new_val, direction))));
     }
 
     pub fn is_leaf(&self) -> bool {

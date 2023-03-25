@@ -15,6 +15,7 @@ pub struct Workspace {
     monitor_resolution: MonitorResolution,
     pub windows: WindowType,
     current_window: Option<WindowType>,
+    current_direction: TilingDirection,
 }
 impl Workspace {
     pub fn new(hmonitor: HMONITOR, resolution: MonitorResolution) -> Self {
@@ -31,27 +32,20 @@ impl Workspace {
             monitor_resolution: resolution,
             windows: tree,
             current_window: Some(tree2),
+            current_direction: TilingDirection::Horizontal,
         }
     }
 
     pub fn add_window(&mut self, window: Window) {
         self.windows
             .borrow_mut()
-            .childrens
-            .push(RefCell::new(Box::new(Node::new(
-                window.clone(),
-                TilingDirection::Horizontal,
-            ))));
+            .insert(window, self.current_direction.clone());
 
-        self.current_window
-            .as_ref()
-            .unwrap()
-            .borrow_mut()
-            .childrens
-            .push(RefCell::new(Box::new(Node::new(
-                window,
-                TilingDirection::Horizontal,
-            ))));
+        // self.current_direction = if self.current_direction == TilingDirection::Horizontal {
+        //     TilingDirection::Vertical
+        // } else {
+        //     TilingDirection::Horizontal
+        // };
     }
 
     pub fn remove_window(window: &mut RefCell<Box<Node<Window>>>, window_handle: isize) {
@@ -100,8 +94,6 @@ impl Workspace {
         }
     }
 
-    pub fn set_current_previous(&self) {}
-
     fn arrange_recursive(
         &self,
         current_node: &RefCell<Box<Node<Window>>>,
@@ -110,14 +102,14 @@ impl Workspace {
         width: i32,
         height: i32,
     ) {
-        if current_node.borrow().is_leaf() {
+        let borrowed_node = current_node.borrow();
+        if borrowed_node.is_leaf() {
             return;
         }
 
         let mut child_x = x;
         let mut child_y = y;
 
-        let borrowed_node = current_node.borrow();
         let managed_childrens: Vec<&RefCell<Box<Node<Window>>>> = borrowed_node
             .childrens
             .iter()
