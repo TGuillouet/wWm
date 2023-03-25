@@ -14,8 +14,6 @@ pub struct Workspace {
     pub monitor_handle: HMONITOR,
     monitor_resolution: MonitorResolution,
     pub windows: WindowType,
-    current_window: Option<WindowType>,
-    current_direction: TilingDirection,
 }
 impl Workspace {
     pub fn new(hmonitor: HMONITOR, resolution: MonitorResolution) -> Self {
@@ -23,29 +21,17 @@ impl Workspace {
             Window::new("()", 1),
             TilingDirection::Vertical,
         )));
-        let tree2 = RefCell::new(Box::new(Node::new(
-            Window::new("()", 1),
-            TilingDirection::Vertical,
-        )));
         Self {
             monitor_handle: hmonitor,
             monitor_resolution: resolution,
             windows: tree,
-            current_window: Some(tree2),
-            current_direction: TilingDirection::Horizontal,
         }
     }
 
     pub fn add_window(&mut self, window: Window) {
         self.windows
             .borrow_mut()
-            .insert(window, self.current_direction.clone());
-
-        // self.current_direction = if self.current_direction == TilingDirection::Horizontal {
-        //     TilingDirection::Vertical
-        // } else {
-        //     TilingDirection::Horizontal
-        // };
+            .insert(window, TilingDirection::Horizontal);
     }
 
     pub fn remove_window(window: &mut RefCell<Box<Node<Window>>>, window_handle: isize) {
@@ -81,17 +67,7 @@ impl Workspace {
     }
 
     pub fn set_current_next(&mut self) {
-        if let Some(current_window) = self.current_window.take() {
-            if current_window.borrow().childrens.is_empty() {
-                return;
-            }
-            println!("{:?}", current_window.borrow().value.title);
-            self.current_window = Some(current_window.borrow().clone().childrens[1].clone());
-            println!(
-                "{:?}",
-                self.current_window.as_ref().unwrap().borrow().value.title
-            );
-        }
+        // TODO: Allow to insert the next opened window after the one we are at (Do not need to advance if we are at the end of the tree)
     }
 
     fn arrange_recursive(
