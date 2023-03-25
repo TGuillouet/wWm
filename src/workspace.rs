@@ -187,4 +187,15 @@ impl Workspace {
             }
         }
     }
+
+    pub fn set_current_tiling_mode(&mut self, mode: &TilingMode) {
+        if let Some(window) = self
+            .windows
+            .childrens
+            .get_mut(self.current_window_index)
+            .take()
+        {
+            window.value.set_mode(mode.clone());
+        }
+    }
 }

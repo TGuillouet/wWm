@@ -1,12 +1,13 @@
-#[derive(Debug)]
+use crate::windows::TilingMode;
+
 pub enum WmAction {
     Workspace(WorkspaceAction),
     Close { hwnd: isize },
 }
 
-#[derive(Debug)]
 pub enum WorkspaceAction {
     NextAsCurrent,
     PreviousAsCurrent,
     // SetCurrentWindow { hwnd: isize },
+    ToggleMode(TilingMode),
 }

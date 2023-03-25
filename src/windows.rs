@@ -21,9 +21,8 @@ impl Window {
         }
     }
 
-    pub fn with_mode(mut self, mode: TilingMode) -> Self {
+    pub fn set_mode(&mut self, mode: TilingMode) {
         self.mode = mode;
-        self
     }
 
     pub fn set_window_pos(&self, x: i32, y: i32, width: i32, height: i32) -> bool {

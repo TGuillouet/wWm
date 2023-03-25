@@ -13,7 +13,11 @@ use windows_sys::Win32::{
     },
 };
 
-use crate::GlobalWindowData;
+use crate::{
+    actions::{WmAction, WorkspaceAction},
+    windows::TilingMode,
+    GlobalWindowData,
+};
 
 pub fn create_inputs_window(global_data: Box<GlobalWindowData>) -> isize {
     let h_instance = unsafe { GetModuleHandleW(std::ptr::null()) };
@@ -76,19 +80,23 @@ fn handle_hotkey(hwnd: isize, key: usize) {
         unsafe { GetWindowLongPtrW(hwnd, GWLP_USERDATA) as *mut GlobalWindowData };
     let window_data = unsafe { &*window_data_ptr };
     match key {
-        1 => window_data
-            .sender
-            .send(crate::WmAction::Workspace(
-                crate::actions::WorkspaceAction::PreviousAsCurrent,
-            ))
-            .unwrap(),
-        2 => window_data
-            .sender
-            .send(crate::WmAction::Workspace(
-                crate::actions::WorkspaceAction::NextAsCurrent,
-            ))
-            .unwrap(),
-        3 => {
+        1 => dispatch(
+            window_data,
+            WmAction::Workspace(WorkspaceAction::PreviousAsCurrent),
+        ),
+        2 => dispatch(
+            window_data,
+            WmAction::Workspace(WorkspaceAction::NextAsCurrent),
+        ),
+        3 => dispatch(
+            window_data,
+            WmAction::Workspace(WorkspaceAction::ToggleMode(TilingMode::Monocle)),
+        ),
+        4 => dispatch(
+            window_data,
+            WmAction::Workspace(WorkspaceAction::ToggleMode(TilingMode::Managed)),
+        ),
+        9 => {
             window_data
                 .sender
                 .send(crate::actions::WmAction::Close { hwnd })
@@ -98,23 +106,28 @@ fn handle_hotkey(hwnd: isize, key: usize) {
     }
 }
 
+fn dispatch(window_data: &GlobalWindowData, action: WmAction) {
+    window_data
+        .sender
+        .send(action)
+        .expect("Could not dispatch the Window manager action ")
+}
+
 pub fn register_hotkeys(hwnd: isize) {
     let modifier = MOD_CONTROL;
-    let registered = unsafe { RegisterHotKey(hwnd, 1, modifier, 49) }; // VK_1
-    println!("Hotkey 1 registered: {}", registered);
 
-    let registered = unsafe { RegisterHotKey(hwnd, 2, modifier, 50) }; // VK_2
-    println!("Hotkey 2 registered: {}", registered);
-
-    let registered = unsafe { RegisterHotKey(hwnd, 3, modifier, 51) }; // VK_3
-    println!("Hotkey 2 registered: {}", registered);
+    for hotkey_index in 0..9 {
+        let registered =
+            unsafe { RegisterHotKey(hwnd, hotkey_index + 1, modifier, 49 + hotkey_index as u32) }; // VK_1
+        println!("Hotkey {} registered: {}", hotkey_index + 1, registered);
+    }
 }
 
 pub fn unregister_hotkeys(hwnd: isize) {
     println!("Unregistering the hotkeys");
-    unsafe { UnregisterHotKey(hwnd, 1) };
-    unsafe { UnregisterHotKey(hwnd, 2) };
-    unsafe { UnregisterHotKey(hwnd, 3) };
+    for hotkey_index in 0..9 {
+        unsafe { UnregisterHotKey(hwnd, hotkey_index) };
+    }
 }
 
 pub fn close_inputs_window(hwnd: isize) {

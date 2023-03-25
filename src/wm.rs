@@ -8,6 +8,7 @@ use crate::config::Config;
 use crate::monitor::get_monitor_from_window;
 use crate::monitor::get_monitor_resolution;
 use crate::windows::Window;
+use crate::workspace;
 use crate::workspace::Workspace;
 
 pub struct WindowManager {
@@ -142,6 +143,11 @@ impl WindowManager {
                 // TODO: Make the change only on the workspace where the mouse is on
                 for workspace in self.workspaces.iter_mut() {
                     workspace.set_current_previous();
+                }
+            }
+            WorkspaceAction::ToggleMode(mode) => {
+                for workspace in self.workspaces.iter_mut() {
+                    workspace.set_current_tiling_mode(&mode)
                 }
             }
         }
