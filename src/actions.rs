@@ -10,4 +10,5 @@ pub enum WorkspaceAction {
     PreviousAsCurrent,
     // SetCurrentWindow { hwnd: isize },
     ToggleMode(TilingMode),
+    PutCurrentWindowInWorkspace { workspace_index: usize },
 }

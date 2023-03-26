@@ -145,6 +145,24 @@ impl WindowManager {
             WorkspaceAction::ToggleMode(mode) => {
                 self.get_current_workspace().set_current_tiling_mode(&mode);
             }
+            WorkspaceAction::PutCurrentWindowInWorkspace { workspace_index } => {
+                if self.get_current_workspace().windows.childrens.is_empty() {
+                    return;
+                }
+
+                let window = {
+                    let workspace = self.get_current_workspace();
+                    let current_window = workspace.get_current_window().value.clone();
+
+                    Workspace::remove_window(&mut workspace.windows, current_window.hwnd);
+
+                    current_window
+                };
+
+                if let Some(new_workspace) = self.workspaces.get_mut(workspace_index) {
+                    new_workspace.add_window(window.clone());
+                }
+            }
         }
     }
 

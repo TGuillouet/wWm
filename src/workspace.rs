@@ -54,6 +54,10 @@ impl Workspace {
             .retain(|child| child.value.hwnd != window_handle);
     }
 
+    pub fn get_current_window(&self) -> &WindowType {
+        &self.windows.childrens[self.current_window_index]
+    }
+
     pub fn arrange_windows(&self) {
         self.arrange_recursive(
             &self.windows,

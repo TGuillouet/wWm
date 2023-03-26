@@ -4,7 +4,7 @@ use windows_sys::Win32::{
     Foundation::{LPARAM, LRESULT, WPARAM},
     System::LibraryLoader::GetModuleHandleW,
     UI::{
-        Input::KeyboardAndMouse::{RegisterHotKey, UnregisterHotKey, MOD_CONTROL, VK_1},
+        Input::KeyboardAndMouse::{RegisterHotKey, UnregisterHotKey, MOD_CONTROL, MOD_SHIFT, VK_1},
         WindowsAndMessaging::{
             CreateWindowExW, DefWindowProcW, DestroyWindow, GetWindowLongPtrW, PostMessageW,
             RegisterClassW, SetWindowLongPtrA, CS_HREDRAW, CS_VREDRAW, GWLP_USERDATA, WM_CLOSE,
@@ -82,6 +82,18 @@ fn handle_hotkey(hwnd: isize, key: u16) {
                 .send(crate::actions::WmAction::Close { hwnd })
                 .unwrap();
         }
+        10 => dispatch(
+            window_data,
+            WmAction::Workspace(WorkspaceAction::PutCurrentWindowInWorkspace {
+                workspace_index: 0,
+            }),
+        ),
+        11 => dispatch(
+            window_data,
+            WmAction::Workspace(WorkspaceAction::PutCurrentWindowInWorkspace {
+                workspace_index: 1,
+            }),
+        ),
         _ => {}
     }
 }
@@ -126,7 +138,6 @@ unsafe extern "system" fn window_proc(
 
 pub fn register_hotkeys() {
     let modifier = MOD_CONTROL;
-
     for hotkey_index in 0..9 {
         let registered = unsafe {
             RegisterHotKey(
@@ -138,11 +149,24 @@ pub fn register_hotkeys() {
         }; // VK_1
         println!("Hotkey {} registered: {}", hotkey_index + 1, registered);
     }
+
+    let modifier = MOD_SHIFT | MOD_CONTROL;
+    for hotkey_index in 1..9 {
+        let registered = unsafe {
+            RegisterHotKey(
+                0,
+                hotkey_index + 9,
+                modifier,
+                VK_1 as u32 + (hotkey_index - 1) as u32,
+            )
+        }; // VK_1
+        println!("Hotkey {} registered: {}", hotkey_index + 9, registered);
+    }
 }
 
 pub fn unregister_hotkeys() {
     println!("Unregistering the hotkeys");
-    for hotkey_index in 0..9 {
-        unsafe { UnregisterHotKey(0, hotkey_index) };
+    for hotkey_index in 0..18 {
+        unsafe { UnregisterHotKey(0, hotkey_index + 1) };
     }
 }
