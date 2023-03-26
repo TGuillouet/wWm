@@ -1,11 +1,16 @@
 use actions::WmAction;
 use dotenv::dotenv;
 use input::create_inputs_window;
-use std::{mem::zeroed, sync::mpsc::Sender, thread::JoinHandle};
+use std::{
+    mem::zeroed,
+    sync::mpsc::{Receiver, Sender},
+    thread::JoinHandle,
+};
 
 use config::{Config, ConfigBuilder};
 use windows_sys::Win32::UI::WindowsAndMessaging::{
-    DispatchMessageW, GetMessageA, TranslateMessage,
+    DispatchMessageW, GetMessageA, PeekMessageA, PostMessageA, TranslateMessage, PM_REMOVE,
+    WM_CLOSE, WM_HOTKEY,
 };
 use wm::WindowManager;
 
@@ -30,12 +35,13 @@ fn main() {
     let config = init_configuration();
 
     let (hotkeys_sender, hotkeys_receiver) = std::sync::mpsc::channel();
+    let (shutdown_sender, shutdown_receiver) = std::sync::mpsc::channel::<bool>();
 
     let mut window_manager = WindowManager::new(config);
     window_manager.get_monitors();
     window_manager.list_managable_windows();
 
-    let inputs_thread_handle = init_inputs_thread(hotkeys_sender);
+    let inputs_thread_handle = init_inputs_thread(hotkeys_sender, shutdown_receiver);
 
     window_manager.fetch_windows();
     window_manager.arrange_workspaces();
@@ -45,6 +51,9 @@ fn main() {
                 WmAction::Workspace(action) => window_manager.handle_action(action),
                 WmAction::Close { hwnd } => {
                     close_inputs_window(hwnd);
+                    shutdown_sender
+                        .send(true)
+                        .expect("Could not send the shutdown message");
                     break;
                 }
             },
@@ -55,9 +64,10 @@ fn main() {
         window_manager.arrange_workspaces();
         std::thread::sleep(std::time::Duration::from_millis(500));
     }
-    inputs_thread_handle
-        .join()
-        .expect("Could not join the inputs thread !");
+
+    for handle in inputs_thread_handle.into_iter() {
+        handle.join().expect("Could not join the inputs thread !");
+    }
 }
 
 fn init_configuration() -> Config {
@@ -72,17 +82,63 @@ fn init_configuration() -> Config {
     ConfigBuilder::new(config_file_str).build()
 }
 
-fn init_inputs_thread(hotkeys_sender: Sender<WmAction>) -> JoinHandle<()> {
-    std::thread::spawn(move || {
+fn init_inputs_thread(
+    hotkeys_sender: Sender<WmAction>,
+    shutdown_receiver: Receiver<bool>,
+) -> [JoinHandle<()>; 2] {
+    let (hwnd_sender, hwnd_receiver) = std::sync::mpsc::channel::<isize>();
+
+    let desktop_handle = std::thread::spawn(move || {
+        register_hotkeys();
+        let mut msg = unsafe { zeroed() };
+
+        let mut global_window_hwnd = 0;
+        loop {
+            match hwnd_receiver.try_recv() {
+                Ok(hwnd) => {
+                    global_window_hwnd = hwnd;
+                    break;
+                }
+                Err(_) => {}
+            }
+        }
+
+        loop {
+            match shutdown_receiver.try_recv() {
+                Ok(_) => {
+                    println!("Receive shutdown");
+                    break;
+                }
+                Err(_) => {}
+            }
+
+            if unsafe { PeekMessageA(&mut msg, 0, 0, 0, PM_REMOVE) } > 0 {
+                if msg.message == WM_HOTKEY {
+                    unsafe { PostMessageA(global_window_hwnd, msg.message, msg.wParam, 0) };
+                }
+            }
+        }
+    });
+
+    let window_handle = std::thread::spawn(move || {
         let global_window_data = Box::new(GlobalWindowData {
             sender: hotkeys_sender,
         });
         let global_hwnd = create_inputs_window(global_window_data);
-        register_hotkeys(global_hwnd);
+        hwnd_sender
+            .send(global_hwnd)
+            .expect("Could not send the hwnd to the other thread !");
+
         let mut msg = unsafe { zeroed() };
-        while unsafe { GetMessageA(&mut msg, global_hwnd, 0, 0) > 0 } {
+        while unsafe { GetMessageA(&mut msg, global_hwnd, 0, 0) } != 0 {
             unsafe { TranslateMessage(&msg) };
             unsafe { DispatchMessageW(&msg) };
+
+            if msg.message == WM_CLOSE {
+                break;
+            }
         }
-    })
+    });
+
+    [desktop_handle, window_handle]
 }

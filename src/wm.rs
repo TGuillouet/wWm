@@ -8,7 +8,6 @@ use crate::config::Config;
 use crate::monitor::get_monitor_from_window;
 use crate::monitor::get_monitor_resolution;
 use crate::windows::Window;
-use crate::workspace;
 use crate::workspace::Workspace;
 
 pub struct WindowManager {

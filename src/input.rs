@@ -2,13 +2,14 @@ use std::{ffi::CString, mem::zeroed};
 
 use windows_sys::Win32::{
     Foundation::{LPARAM, LRESULT, WPARAM},
+    Graphics::Gdi::UpdateWindow,
     System::LibraryLoader::GetModuleHandleW,
     UI::{
-        Input::KeyboardAndMouse::{RegisterHotKey, UnregisterHotKey, MOD_CONTROL},
+        Input::KeyboardAndMouse::{RegisterHotKey, UnregisterHotKey, MOD_CONTROL, VK_1},
         WindowsAndMessaging::{
             CreateWindowExW, DefWindowProcW, DestroyWindow, GetWindowLongPtrW, PostMessageW,
-            RegisterClassW, SetWindowLongPtrA, CS_HREDRAW, CS_VREDRAW, GWLP_USERDATA, WM_CLOSE,
-            WM_HOTKEY, WNDCLASSW,
+            RegisterClassW, SetWindowLongPtrA, ShowWindow, CS_HREDRAW, CS_VREDRAW, GWLP_USERDATA,
+            WM_CLOSE, WM_HOTKEY, WNDCLASSW,
         },
     },
 };
@@ -61,9 +62,16 @@ unsafe extern "system" fn window_proc(
     wparam: WPARAM,
     lparam: LPARAM,
 ) -> LRESULT {
+    println!(
+        "HWND: {}, Close: {}, Hotkey: {}, msg: {}",
+        hwnd,
+        msg == WM_CLOSE,
+        msg == WM_HOTKEY,
+        msg
+    );
     match msg {
         WM_CLOSE => {
-            unregister_hotkeys(hwnd);
+            unregister_hotkeys();
             DestroyWindow(hwnd);
             return 0;
         }
@@ -113,20 +121,26 @@ fn dispatch(window_data: &GlobalWindowData, action: WmAction) {
         .expect("Could not dispatch the Window manager action ")
 }
 
-pub fn register_hotkeys(hwnd: isize) {
+pub fn register_hotkeys() {
     let modifier = MOD_CONTROL;
 
     for hotkey_index in 0..9 {
-        let registered =
-            unsafe { RegisterHotKey(hwnd, hotkey_index + 1, modifier, 49 + hotkey_index as u32) }; // VK_1
+        let registered = unsafe {
+            RegisterHotKey(
+                0,
+                hotkey_index + 1,
+                modifier,
+                VK_1 as u32 + hotkey_index as u32,
+            )
+        }; // VK_1
         println!("Hotkey {} registered: {}", hotkey_index + 1, registered);
     }
 }
 
-pub fn unregister_hotkeys(hwnd: isize) {
+pub fn unregister_hotkeys() {
     println!("Unregistering the hotkeys");
     for hotkey_index in 0..9 {
-        unsafe { UnregisterHotKey(hwnd, hotkey_index) };
+        unsafe { UnregisterHotKey(0, hotkey_index) };
     }
 }
 
