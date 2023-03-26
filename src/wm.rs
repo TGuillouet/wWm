@@ -14,6 +14,8 @@ pub struct WindowManager {
     config: Config,
     windows: Vec<isize>,
     workspaces: Vec<Workspace>,
+
+    current_workspace_index: usize,
 }
 impl WindowManager {
     pub fn new(config: Config) -> Self {
@@ -21,6 +23,8 @@ impl WindowManager {
             config,
             windows: Vec::new(),
             workspaces: Vec::new(),
+
+            current_workspace_index: 0,
         }
     }
 
@@ -133,23 +137,27 @@ impl WindowManager {
     pub fn handle_action(&mut self, action: WorkspaceAction) {
         match action {
             WorkspaceAction::NextAsCurrent => {
-                // TODO: Make the change only on the workspace where the mouse is on
-                for workspace in self.workspaces.iter_mut() {
-                    workspace.set_current_next();
-                }
+                self.get_current_workspace().set_current_next();
             }
             WorkspaceAction::PreviousAsCurrent => {
-                // TODO: Make the change only on the workspace where the mouse is on
-                for workspace in self.workspaces.iter_mut() {
-                    workspace.set_current_previous();
-                }
+                self.get_current_workspace().set_current_previous()
             }
             WorkspaceAction::ToggleMode(mode) => {
-                for workspace in self.workspaces.iter_mut() {
-                    workspace.set_current_tiling_mode(&mode)
-                }
+                self.get_current_workspace().set_current_tiling_mode(&mode);
             }
         }
+    }
+
+    pub fn update_current_monitor(&mut self, x: i32, y: i32) {
+        for (index, workspace) in self.workspaces.iter().enumerate() {
+            if workspace.is_current_workspace(x, y) {
+                self.current_workspace_index = index;
+            }
+        }
+    }
+
+    fn get_current_workspace(&mut self) -> &mut Workspace {
+        &mut self.workspaces[self.current_workspace_index]
     }
 }
 

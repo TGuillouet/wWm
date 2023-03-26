@@ -8,9 +8,12 @@ use std::{
 };
 
 use config::{Config, ConfigBuilder};
-use windows_sys::Win32::UI::WindowsAndMessaging::{
-    DispatchMessageW, GetMessageA, PeekMessageA, PostMessageA, TranslateMessage, PM_REMOVE,
-    WM_CLOSE, WM_HOTKEY,
+use windows_sys::Win32::{
+    Foundation::POINT,
+    UI::WindowsAndMessaging::{
+        DispatchMessageW, GetCursorPos, GetMessageA, PeekMessageA, PostMessageA, TranslateMessage,
+        PM_REMOVE, WM_CLOSE, WM_HOTKEY,
+    },
 };
 use wm::WindowManager;
 
@@ -45,7 +48,10 @@ fn main() {
 
     window_manager.fetch_windows();
     window_manager.arrange_workspaces();
+
+    let mut cursor_position: POINT = POINT { x: 0, y: 0 };
     loop {
+        unsafe { GetCursorPos(&mut cursor_position) };
         match hotkeys_receiver.try_recv() {
             Ok(action) => match action {
                 WmAction::Workspace(action) => window_manager.handle_action(action),
@@ -60,8 +66,10 @@ fn main() {
             Err(_) => {}
         }
 
+        window_manager.update_current_monitor(cursor_position.x, cursor_position.y);
         window_manager.fetch_windows();
         window_manager.arrange_workspaces();
+
         std::thread::sleep(std::time::Duration::from_millis(500));
     }
 

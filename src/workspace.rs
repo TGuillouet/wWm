@@ -64,6 +64,10 @@ impl Workspace {
         )
     }
 
+    pub fn is_current_workspace(&self, x: i32, y: i32) -> bool {
+        self.monitor_resolution.is_point_in_monitor(x, y)
+    }
+
     pub fn set_current_next(&mut self) {
         if self.windows.childrens.is_empty() {
             return;

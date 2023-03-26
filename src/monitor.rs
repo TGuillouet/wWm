@@ -8,6 +8,11 @@ pub struct MonitorResolution {
     pub width: i32,
     pub height: i32,
 }
+impl MonitorResolution {
+    pub fn is_point_in_monitor(&self, x: i32, y: i32) -> bool {
+        x > self.rect.left && x < self.rect.right && y > self.rect.top && y < self.rect.bottom
+    }
+}
 
 pub fn get_monitor_resolution(monitor: HMONITOR) -> MonitorResolution {
     let mut monitor_info = MONITORINFO {
