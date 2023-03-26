@@ -2,7 +2,6 @@ use std::{ffi::CString, mem::zeroed};
 
 use windows_sys::Win32::{
     Foundation::{LPARAM, LRESULT, WPARAM},
-    Graphics::Gdi::UpdateWindow,
     System::LibraryLoader::GetModuleHandleW,
     UI::{
         Input::KeyboardAndMouse::{
@@ -10,8 +9,8 @@ use windows_sys::Win32::{
         },
         WindowsAndMessaging::{
             CreateWindowExW, DefWindowProcW, DestroyWindow, GetWindowLongPtrW, PostMessageW,
-            RegisterClassW, SetWindowLongPtrA, ShowWindow, CS_HREDRAW, CS_VREDRAW, GWLP_USERDATA,
-            WM_CLOSE, WM_HOTKEY, WNDCLASSW,
+            RegisterClassW, SetWindowLongPtrA, CS_HREDRAW, CS_VREDRAW, GWLP_USERDATA, WM_CLOSE,
+            WM_HOTKEY, WNDCLASSW,
         },
     },
 };
@@ -58,33 +57,6 @@ pub fn create_inputs_window(global_data: Box<GlobalWindowData>) -> isize {
     hwnd
 }
 
-unsafe extern "system" fn window_proc(
-    hwnd: isize,
-    msg: u32,
-    wparam: WPARAM,
-    lparam: LPARAM,
-) -> LRESULT {
-    println!(
-        "HWND: {}, Close: {}, Hotkey: {}, msg: {}",
-        hwnd,
-        msg == WM_CLOSE,
-        msg == WM_HOTKEY,
-        msg
-    );
-    match msg {
-        WM_CLOSE => {
-            unregister_hotkeys();
-            DestroyWindow(hwnd);
-            return 0;
-        }
-        WM_HOTKEY => {
-            handle_hotkey(hwnd, wparam as u16);
-            return 0;
-        }
-        _ => return DefWindowProcW(hwnd, msg, wparam, lparam),
-    }
-}
-
 fn handle_hotkey(hwnd: isize, key: u16) {
     let window_data_ptr =
         unsafe { GetWindowLongPtrW(hwnd, GWLP_USERDATA) as *mut GlobalWindowData };
@@ -123,6 +95,37 @@ fn dispatch(window_data: &GlobalWindowData, action: WmAction) {
         .expect("Could not dispatch the Window manager action ")
 }
 
+pub fn close_inputs_window(hwnd: isize) {
+    unsafe { PostMessageW(hwnd, WM_CLOSE, 0, 0) };
+}
+
+unsafe extern "system" fn window_proc(
+    hwnd: isize,
+    msg: u32,
+    wparam: WPARAM,
+    lparam: LPARAM,
+) -> LRESULT {
+    println!(
+        "HWND: {}, Close: {}, Hotkey: {}, msg: {}",
+        hwnd,
+        msg == WM_CLOSE,
+        msg == WM_HOTKEY,
+        msg
+    );
+    match msg {
+        WM_CLOSE => {
+            unregister_hotkeys();
+            DestroyWindow(hwnd);
+            return 0;
+        }
+        WM_HOTKEY => {
+            handle_hotkey(hwnd, wparam as u16);
+            return 0;
+        }
+        _ => return DefWindowProcW(hwnd, msg, wparam, lparam),
+    }
+}
+
 pub fn register_hotkeys() {
     let modifier = MOD_CONTROL;
 
@@ -144,8 +147,4 @@ pub fn unregister_hotkeys() {
     for hotkey_index in 0..9 {
         unsafe { UnregisterHotKey(0, hotkey_index) };
     }
-}
-
-pub fn close_inputs_window(hwnd: isize) {
-    unsafe { PostMessageW(hwnd, WM_CLOSE, 0, 0) };
 }
