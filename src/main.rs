@@ -92,7 +92,7 @@ fn init_inputs_thread(
         register_hotkeys();
         let mut msg = unsafe { zeroed() };
 
-        let mut global_window_hwnd = 0;
+        let global_window_hwnd;
         loop {
             match hwnd_receiver.try_recv() {
                 Ok(hwnd) => {
