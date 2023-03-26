@@ -5,7 +5,9 @@ use windows_sys::Win32::{
     Graphics::Gdi::UpdateWindow,
     System::LibraryLoader::GetModuleHandleW,
     UI::{
-        Input::KeyboardAndMouse::{RegisterHotKey, UnregisterHotKey, MOD_CONTROL, VK_1},
+        Input::KeyboardAndMouse::{
+            RegisterHotKey, UnregisterHotKey, MOD_CONTROL, VK_1, VK_2, VK_3, VK_4, VK_9,
+        },
         WindowsAndMessaging::{
             CreateWindowExW, DefWindowProcW, DestroyWindow, GetWindowLongPtrW, PostMessageW,
             RegisterClassW, SetWindowLongPtrA, ShowWindow, CS_HREDRAW, CS_VREDRAW, GWLP_USERDATA,
@@ -76,35 +78,35 @@ unsafe extern "system" fn window_proc(
             return 0;
         }
         WM_HOTKEY => {
-            handle_hotkey(hwnd, wparam);
+            handle_hotkey(hwnd, wparam as u16);
             return 0;
         }
         _ => return DefWindowProcW(hwnd, msg, wparam, lparam),
     }
 }
 
-fn handle_hotkey(hwnd: isize, key: usize) {
+fn handle_hotkey(hwnd: isize, key: u16) {
     let window_data_ptr =
         unsafe { GetWindowLongPtrW(hwnd, GWLP_USERDATA) as *mut GlobalWindowData };
     let window_data = unsafe { &*window_data_ptr };
     match key {
-        1 => dispatch(
+        VK_1 => dispatch(
             window_data,
             WmAction::Workspace(WorkspaceAction::PreviousAsCurrent),
         ),
-        2 => dispatch(
+        VK_2 => dispatch(
             window_data,
             WmAction::Workspace(WorkspaceAction::NextAsCurrent),
         ),
-        3 => dispatch(
+        VK_3 => dispatch(
             window_data,
             WmAction::Workspace(WorkspaceAction::ToggleMode(TilingMode::Monocle)),
         ),
-        4 => dispatch(
+        VK_4 => dispatch(
             window_data,
             WmAction::Workspace(WorkspaceAction::ToggleMode(TilingMode::Managed)),
         ),
-        9 => {
+        VK_9 => {
             window_data
                 .sender
                 .send(crate::actions::WmAction::Close { hwnd })
