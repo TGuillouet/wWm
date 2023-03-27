@@ -1,7 +1,5 @@
-use windows_sys::Win32::Graphics::Gdi::HMONITOR;
-
 use crate::{
-    monitor::MonitorResolution,
+    monitor::Monitor,
     tree::{Node, TilingDirection},
     windows::{TilingMode, Window},
 };
@@ -9,18 +7,16 @@ use crate::{
 type WindowType = Box<Node<Window>>;
 
 pub struct Workspace {
-    pub monitor_handle: HMONITOR,
-    monitor_resolution: MonitorResolution,
+    monitor: Monitor,
     pub windows: WindowType,
 
     current_window_index: usize,
 }
 impl Workspace {
-    pub fn new(hmonitor: HMONITOR, resolution: MonitorResolution) -> Self {
+    pub fn new(resolution: Monitor) -> Self {
         let tree = Box::new(Node::new(Window::new("()", 1), TilingDirection::Vertical));
         Self {
-            monitor_handle: hmonitor,
-            monitor_resolution: resolution,
+            monitor: resolution,
             windows: tree,
             current_window_index: 0,
         }
@@ -61,15 +57,15 @@ impl Workspace {
     pub fn arrange_windows(&self) {
         self.arrange_recursive(
             &self.windows,
-            self.monitor_resolution.rect.left,
-            self.monitor_resolution.rect.top,
-            self.monitor_resolution.width,
-            self.monitor_resolution.height,
+            self.monitor.rect.left,
+            self.monitor.rect.top,
+            self.monitor.width,
+            self.monitor.height,
         )
     }
 
     pub fn is_current_workspace(&self, x: i32, y: i32) -> bool {
-        self.monitor_resolution.is_point_in_monitor(x, y)
+        self.monitor.is_point_in_monitor(x, y)
     }
 
     pub fn set_current_next(&mut self) {
@@ -164,10 +160,10 @@ impl Workspace {
                 TilingMode::Monocle => {
                     if borrowed_children.is_leaf() {
                         borrowed_children.value.set_window_pos(
-                            self.monitor_resolution.rect.left,
-                            self.monitor_resolution.rect.top,
-                            self.monitor_resolution.width,
-                            self.monitor_resolution.height,
+                            self.monitor.rect.left,
+                            self.monitor.rect.top,
+                            self.monitor.width,
+                            self.monitor.height,
                         );
                         borrowed_children.value.put_on_top();
                     } else {
@@ -205,5 +201,9 @@ impl Workspace {
         {
             window.value.set_mode(mode.clone());
         }
+    }
+
+    pub fn is_on_monitor(&self, monitor: isize) -> bool {
+        self.monitor.monitor_handle == monitor
     }
 }

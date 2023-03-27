@@ -63,6 +63,7 @@ impl ConfigBuilder {
 
                 if let Some(command) = splitted_line.pop_front() {
                     match command {
+                        "workspace" => {}
                         "rule" => {
                             if let Some(rule_command) = splitted_line.pop_front() {
                                 let remaining_line = Vec::from(splitted_line).join(" ");

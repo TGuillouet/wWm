@@ -1,12 +1,10 @@
 use windows_sys::Win32::Foundation::LPARAM;
-use windows_sys::Win32::Foundation::RECT;
-use windows_sys::Win32::Graphics::Gdi::{EnumDisplayMonitors, HDC, HMONITOR};
+use windows_sys::Win32::Graphics::Gdi::HMONITOR;
 use windows_sys::Win32::UI::WindowsAndMessaging::{EnumWindows, IsWindowVisible};
 
 use crate::actions::WorkspaceAction;
 use crate::config::Config;
-use crate::monitor::get_monitor_from_window;
-use crate::monitor::get_monitor_resolution;
+use crate::monitor::{get_monitor_from_window, Monitors};
 use crate::windows::Window;
 use crate::workspace::Workspace;
 
@@ -29,22 +27,10 @@ impl WindowManager {
     }
 
     pub fn get_monitors(&mut self) {
-        let mut monitors: Vec<HMONITOR> = Vec::new();
-
-        unsafe {
-            EnumDisplayMonitors(
-                0,
-                std::ptr::null_mut(),
-                Some(enum_monitors_callback),
-                &mut monitors as *mut Vec<HMONITOR> as LPARAM,
-            );
-        }
+        let monitors = Monitors::get_monitors_list();
 
         for monitor in monitors {
-            let monitor_resolution = get_monitor_resolution(monitor);
-
-            self.workspaces
-                .push(Workspace::new(monitor, monitor_resolution));
+            self.workspaces.push(Workspace::new(monitor));
         }
     }
 
@@ -108,7 +94,7 @@ impl WindowManager {
                 let monitor: HMONITOR = get_monitor_from_window(window_hwnd);
 
                 for workspace in self.workspaces.iter_mut() {
-                    if workspace.monitor_handle == monitor && !self.windows.contains(&window_hwnd) {
+                    if workspace.is_on_monitor(monitor) && !self.windows.contains(&window_hwnd) {
                         self.windows.push(window_hwnd);
                         workspace.add_window(Window::new(&title, window_hwnd));
                     }
@@ -186,16 +172,5 @@ unsafe extern "system" fn get_window_def(hwnd: isize, data: LPARAM) -> i32 {
 
     let windows = &mut *(data as *mut Vec<isize>);
     windows.push(hwnd);
-    1
-}
-
-unsafe extern "system" fn enum_monitors_callback(
-    monitor: HMONITOR,
-    _: HDC,
-    _: *mut RECT,
-    data: LPARAM,
-) -> i32 {
-    let monitors = &mut *(data as *mut Vec<HMONITOR>);
-    monitors.push(monitor);
     1
 }
