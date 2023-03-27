@@ -8,6 +8,7 @@ use regex::Regex;
 pub struct Config {
     _excluded_windows: Vec<Regex>,
     managed_windows: Vec<Regex>,
+    workspaces_monitors: Vec<String>,
 }
 impl Config {
     pub fn _is_excluded(&self, window_title: &str) -> bool {
@@ -34,6 +35,7 @@ impl Config {
 enum Command {
     RuleExclude(Regex),
     RuleManaged(Regex),
+    Workspace(usize, String),
 }
 
 pub struct ConfigBuilder {
@@ -63,7 +65,15 @@ impl ConfigBuilder {
 
                 if let Some(command) = splitted_line.pop_front() {
                     match command {
-                        "workspace" => {}
+                        "workspace" => {
+                            if let Some(workspace_index) = splitted_line.pop_front() {
+                                let monitor_name = Vec::from(splitted_line).join(" ");
+                                if let Ok(workspace_index) = str::parse::<usize>(workspace_index) {
+                                    commands
+                                        .push(Command::Workspace(workspace_index, monitor_name));
+                                }
+                            }
+                        }
                         "rule" => {
                             if let Some(rule_command) = splitted_line.pop_front() {
                                 let remaining_line = Vec::from(splitted_line).join(" ");
@@ -93,17 +103,23 @@ impl ConfigBuilder {
     pub fn build(&self) -> Config {
         let mut managed_rule_regexes = Vec::new();
         let mut unmanaged_rule_regexes: Vec<Regex> = Vec::new();
+        let mut workspaces: Vec<(usize, String)> = Vec::new();
 
         for command in self.commands.iter() {
             match command {
                 Command::RuleExclude(regex) => unmanaged_rule_regexes.push(regex.clone()),
                 Command::RuleManaged(regex) => managed_rule_regexes.push(regex.clone()),
+                Command::Workspace(index, name) => workspaces.push((index.clone(), name.clone())),
             }
         }
+
+        // Sort the workspaces by indexes
+        workspaces.sort_by(|a, b| a.0.cmp(&b.0));
 
         Config {
             _excluded_windows: unmanaged_rule_regexes,
             managed_windows: managed_rule_regexes,
+            workspaces_monitors: workspaces.into_iter().map(|item| item.1).collect(),
         }
     }
 }

@@ -29,6 +29,8 @@ impl WindowManager {
     pub fn get_monitors(&mut self) {
         let monitors = Monitors::get_monitors_list();
 
+        // TODO: Get the workspaces indexes from the configuration
+
         for monitor in monitors {
             self.workspaces.push(Workspace::new(monitor));
         }
