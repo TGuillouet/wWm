@@ -4,6 +4,7 @@ use windows_sys::Win32::Graphics::Gdi::{
     HDC, HMONITOR, MONITORINFO, MONITOR_DEFAULTTONEAREST,
 };
 
+#[derive(Clone)]
 pub struct Monitor {
     pub name: String,
     pub monitor_handle: HMONITOR,

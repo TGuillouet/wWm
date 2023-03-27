@@ -30,6 +30,10 @@ impl Config {
 
         false
     }
+
+    pub fn get_workspaces_monitors(&self) -> &Vec<String> {
+        &self.workspaces_monitors
+    }
 }
 
 enum Command {

@@ -13,11 +13,10 @@ pub struct Workspace {
     current_window_index: usize,
 }
 impl Workspace {
-    pub fn new(resolution: Monitor) -> Self {
-        let tree = Box::new(Node::new(Window::new("()", 1), TilingDirection::Vertical));
+    pub fn new(monitor: Monitor) -> Self {
         Self {
-            monitor: resolution,
-            windows: tree,
+            monitor,
+            windows: Box::new(Node::new(Window::new("()", 1), TilingDirection::Vertical)),
             current_window_index: 0,
         }
     }

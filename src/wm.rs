@@ -29,10 +29,14 @@ impl WindowManager {
     pub fn get_monitors(&mut self) {
         let monitors = Monitors::get_monitors_list();
 
-        // TODO: Get the workspaces indexes from the configuration
+        let workspaces_monitor_name = self.config.get_workspaces_monitors();
 
-        for monitor in monitors {
-            self.workspaces.push(Workspace::new(monitor));
+        for workspace_monitor in workspaces_monitor_name.iter() {
+            for monitor in monitors.iter() {
+                if workspace_monitor.clone() == monitor.name {
+                    self.workspaces.push(Workspace::new(monitor.clone()));
+                }
+            }
         }
     }
 
