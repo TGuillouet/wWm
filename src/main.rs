@@ -4,7 +4,6 @@ use input::create_inputs_window;
 use notify::{Error, Event, RecommendedWatcher, Watcher};
 use std::{
     mem::zeroed,
-    path::PathBuf,
     sync::{
         mpsc::{Receiver, Sender},
         Arc, Mutex,
