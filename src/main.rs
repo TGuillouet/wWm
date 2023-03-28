@@ -1,9 +1,14 @@
 use actions::WmAction;
 use dotenv::dotenv;
 use input::create_inputs_window;
+use notify::{Error, Event, RecommendedWatcher, Watcher};
 use std::{
     mem::zeroed,
-    sync::mpsc::{Receiver, Sender},
+    path::PathBuf,
+    sync::{
+        mpsc::{Receiver, Sender},
+        Arc, Mutex,
+    },
     thread::JoinHandle,
 };
 
@@ -35,7 +40,31 @@ pub struct GlobalWindowData {
 fn main() {
     dotenv().ok();
 
-    let config = init_configuration();
+    let config = Arc::new(Mutex::new(init_configuration(get_config_path())));
+    let cloned_config = Arc::clone(&config);
+
+    let (config_reload_sender, config_reload_receiver) = std::sync::mpsc::channel::<bool>();
+
+    let mut watcher = RecommendedWatcher::new(
+        move |result: Result<Event, Error>| {
+            if let Ok(event) = result {
+                if event.kind.is_modify() {
+                    let config_path = get_config_path();
+                    *cloned_config.lock().unwrap() = init_configuration(config_path);
+
+                    config_reload_sender
+                        .send(true)
+                        .expect("Could not send the config updated event");
+                }
+            }
+        },
+        notify::Config::default(),
+    )
+    .expect("Could not initialize the config watcher !");
+
+    watcher
+        .watch(&get_config_path(), notify::RecursiveMode::NonRecursive)
+        .expect("Could not start the config file hor reloading !");
 
     let (hotkeys_sender, hotkeys_receiver) = std::sync::mpsc::channel();
     let (shutdown_sender, shutdown_receiver) = std::sync::mpsc::channel::<bool>();
@@ -50,7 +79,13 @@ fn main() {
     window_manager.arrange_workspaces();
 
     let mut cursor_position: POINT = POINT { x: 0, y: 0 };
+
     loop {
+        if config_reload_receiver.try_recv().is_ok() {
+            window_manager.get_monitors();
+            println!("Config reloaded !");
+        }
+
         unsafe { GetCursorPos(&mut cursor_position) };
         match hotkeys_receiver.try_recv() {
             Ok(action) => match action {
@@ -78,12 +113,16 @@ fn main() {
     }
 }
 
-fn init_configuration() -> Config {
+pub fn get_config_path() -> PathBuf {
     let config_path_str = std::env::var("CONFIG_PATH").expect("Could not load the config file !");
     let config_path = std::path::Path::new(config_path_str.as_str());
-
     let config_file = config_path.join("config");
-    let config_file_str = config_file
+
+    config_file
+}
+
+fn init_configuration(config_path: PathBuf) -> Config {
+    let config_file_str = config_path
         .to_str()
         .expect("Could not build the config path !");
 

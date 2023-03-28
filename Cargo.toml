@@ -7,5 +7,6 @@ edition = "2021"
 
 [dependencies]
 dotenv = "0.15.0"
+notify = "5.1.0"
 regex = "1.7.1"
 windows-sys = { version = "0.45.0", features = ["Win32_UI_WindowsAndMessaging", "Win32_Foundation", "Win32_Graphics_Gdi", "Win32_UI_Input_KeyboardAndMouse", "Win32_System_LibraryLoader"] }

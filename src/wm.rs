@@ -1,3 +1,5 @@
+use std::sync::{Arc, Mutex};
+
 use windows_sys::Win32::Foundation::LPARAM;
 use windows_sys::Win32::Graphics::Gdi::HMONITOR;
 use windows_sys::Win32::UI::WindowsAndMessaging::{EnumWindows, IsWindowVisible};
@@ -9,14 +11,14 @@ use crate::windows::Window;
 use crate::workspace::Workspace;
 
 pub struct WindowManager {
-    config: Config,
+    config: Arc<Mutex<Config>>,
     windows: Vec<isize>,
     workspaces: Vec<Workspace>,
 
     current_workspace_index: usize,
 }
 impl WindowManager {
-    pub fn new(config: Config) -> Self {
+    pub fn new(config: Arc<Mutex<Config>>) -> Self {
         Self {
             config,
             windows: Vec::new(),
@@ -29,8 +31,11 @@ impl WindowManager {
     pub fn get_monitors(&mut self) {
         let monitors = Monitors::get_monitors_list();
 
-        let workspaces_monitor_name = self.config.get_workspaces_monitors();
+        let config = self.config.lock().unwrap();
+        let workspaces_monitor_name = config.get_workspaces_monitors();
 
+        self.workspaces.clear();
+        self.windows.clear();
         for workspace_monitor in workspaces_monitor_name.iter() {
             for monitor in monitors.iter() {
                 if workspace_monitor.clone() == monitor.name {
@@ -59,7 +64,7 @@ impl WindowManager {
                 continue;
             }
 
-            if self.config.is_managed(&title) {
+            if self.config.lock().unwrap().is_managed(&title) {
                 managed_windows.push(window_hwnd);
             }
         }
@@ -96,7 +101,7 @@ impl WindowManager {
                 continue;
             }
 
-            if self.config.is_managed(&title) {
+            if self.config.lock().unwrap().is_managed(&title) {
                 let monitor: HMONITOR = get_monitor_from_window(window_hwnd);
 
                 for workspace in self.workspaces.iter_mut() {
