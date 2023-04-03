@@ -39,7 +39,11 @@ pub struct GlobalWindowData {
 fn main() {
     dotenv().ok();
 
-    let config = Arc::new(Mutex::new(get_configuration(get_config_path())));
+    let config_pathbuf = get_config_path();
+    let config_path = config_pathbuf
+        .to_str()
+        .expect("Could not transform the config path to string !");
+    let config = Arc::new(Mutex::new(get_configuration(config_path)));
     let cloned_config = Arc::clone(&config);
 
     let (config_reload_sender, config_reload_receiver) = std::sync::mpsc::channel::<bool>();
@@ -48,7 +52,10 @@ fn main() {
         move |result: Result<Event, Error>| {
             if let Ok(event) = result {
                 if event.kind.is_modify() {
-                    let config_path = get_config_path();
+                    let config_pathbuf = get_config_path();
+                    let config_path = config_pathbuf
+                        .to_str()
+                        .expect("Could not transform the config path to string !");
                     *cloned_config.lock().unwrap() = get_configuration(config_path);
 
                     config_reload_sender
@@ -112,14 +119,10 @@ fn main() {
     }
 }
 
-pub fn get_config_path<'a>() -> &'a str {
+pub fn get_config_path() -> std::path::PathBuf {
     let config_path_str = std::env::var("CONFIG_PATH").expect("Could not load the config file !");
     let config_path = std::path::Path::new(config_path_str.as_str());
-    let config_file = config_path.join("config");
-    let config_file_str = config_path
-        .to_str()
-        .expect("Could not build the config path !");
-    config_file_str
+    config_path.join("config").to_path_buf()
 }
 
 fn get_configuration(config_path: &str) -> Config {
